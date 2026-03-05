@@ -1,0 +1,54 @@
+Por favor, redesenhe a tela inicial do aplicativo 'Pretor AI'. O aplicativo é uma ferramenta de produtividade premium que utiliza múltiplas IAs para pesquisa e análise aprofundada, com foco em confiabilidade e transparência para pesquisadores, analistas e estudantes avançados.
+
+Objetivo do Redesign:
+Transformar a UI em algo moderno, intuitivo, bonito e funcional, que reflita o caráter premium e sofisticado do 'Pretor AI'.
+
+Elementos a Manter e Guias de Estilo:
+
+Logotipo e Nome: Mantenha o logotipo 'Pretor AI' no canto superior esquerdo e a tipografia atual, se possível.
+
+Botões Principais: Mantenha a funcionalidade e o número de três botões de escolha principais (representando as opções de interação com a IA). O texto dos botões pode ser genérico para o conceito (ex: "Iniciar Nova Pesquisa", "Ver Histórico", "Configurações de IA").
+
+Identidade Visual e Cores:
+
+Tema Escuro: Mantenha o tema escuro predominante, com um fundo sóbrio e elegante.
+
+Cores de Destaque: Utilize as cores de destaque presentes na tela atual (verde, amarelo/laranja e talvez um cinza claro/branco para texto e elementos secundários).
+
+Estilo: Mantenha a sensação de limpeza, profissionalismo e tecnologia avançada.
+
+Sugestões para as Melhorias (Moderno, Intuitivo, Bonito, Funcional):
+
+Layout e Espaçamento:
+
+Crie um layout mais arejado e minimalista, com bastante espaço negativo para reduzir a poluição visual.
+
+Melhore o alinhamento e a distribuição dos elementos na tela.
+
+Design dos Botões:
+
+Os três botões de escolha devem ser o foco central. Pense em como eles podem ser apresentados de forma mais atraente e clicável (ex: cards com ícones e texto, botões maiores e bem espaçados, com estados de hover e clique claros).
+
+Considere adicionar ícones modernos e minimalistas para cada botão, que complementem o texto.
+
+Tipografia:
+
+Utilize fontes modernas e legíveis, com hierarquia clara entre títulos, subtítulos e texto dos botões.
+
+Pense em um par de fontes que transmita sofisticação e clareza.
+
+Elementos de Cabeçalho/Navegação:
+
+O cabeçalho (com o logo, status como 'ANALISANDO' e botões de 'PRO' e configurações) deve ser mais integrado e elegante, talvez com ícones mais refinados e um visual menos "quadrado".
+
+Apresente o status de forma sutil, mas visível.
+
+Interatividade (Visualização):
+
+Sugira como os elementos podem reagir ao foco ou clique (ex: mudança sutil de cor, sombra, ou um efeito de "elevação").
+
+Estilo Visual Geral:
+
+Adicione elementos de design sutis que transmitam modernidade e alta tecnologia (ex: gradientes suaves, sombras sutis, bordas arredondadas elegantes, ou um toque de "vidro" ou "neomorfismo" se adequado ao estilo).
+
+Evite elementos datados ou genéricos.

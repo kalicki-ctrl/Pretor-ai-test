@@ -1,0 +1,65 @@
+Quero adicionar uma nova funcionalidade ao "Pretor AI" chamada "Modo Colaborativo AI" (ou "Análise Colaborativa AI"), que recria o conceito do "Grok Heavy". Neste modo, as IAs do meu projeto deverão "pensar e interagir entre si" sobre o prompt do usuário antes de gerar suas respostas individuais finais, que então serão processadas pelo Gemini como de costume.
+
+Funcionalidade "Modo Colaborativo AI" (Passo a Passo da Lógica):
+
+Gatilho: Esta funcionalidade será ativada através de um novo botão no menu principal.
+
+Preparação:
+
+Quando o usuário insere um prompt e ativa o "Modo Colaborativo AI", o prompt inicial é o ponto de partida.
+
+Identifique as quatro IAs principais para a interação: Grok, Llama3 (via OpenRouter), Cohere e o próprio Gemini (neste modo, o Gemini atuará tanto como um dos agentes interativos quanto como o sintetizador final).
+
+Fase de Interação Multi-Agente (Inspirado no "Grok Heavy" - "Cross-Evaluation"):
+
+Rodada 1 (Geração de Hipóteses Iniciais):
+
+Envie o prompt do usuário para cada uma das quatro IAs (Grok, Llama3, Cohere, Gemini) em paralelo.
+
+Cada IA deve gerar uma resposta inicial ou uma "hipótese" sobre o prompt, focando em sua própria perspectiva ou especialização.
+
+Rodada 2 (Crítica e Refinamento Cruzado):
+
+Para cada uma das quatro IAs (Grok, Llama3, Cohere, Gemini):
+
+Recupere a resposta inicial gerada por ela mesma.
+
+Recupere as respostas iniciais geradas pelas outras três IAs.
+
+Envie de volta para cada IA (juntamente com o prompt original) uma instrução para analisar criticamente as respostas das outras IAs (buscando divergências, convergências, lacunas ou pontos fortes) e, com base nessa análise, refinar e gerar uma nova e mais robusta resposta final individual para o prompt.
+
+(Exemplo de Prompt Interno para esta fase: "Você é [Nome da IA]. Analise o prompt '[Prompt do Usuário]'. Você gerou a seguinte resposta inicial: '[Sua Resposta Inicial]'. Outras IAs geraram as seguintes respostas: '[Respostas das Outras IAs]'. Considerando todas as perspectivas, refine sua resposta para ser mais precisa, abrangente e confiável, abordando quaisquer pontos de divergência ou lacunas das outras.")
+
+Integração com o Fluxo Existente do Pretor AI:
+
+As quatro respostas finais refinadas (uma de cada IA após a fase de interação) devem ser então enviadas para o módulo de análise e ponderação do Gemini já existente no projeto.
+
+O Gemini, como "fonte de verdade", usará essas respostas refinadas e aplicará o sistema de pesos para gerar a resposta final ao usuário, juntamente com as pontuações sobre divergências, convergências, pontos de atenção e opiniões.
+
+Requisitos Técnicos para a Implementação:
+
+Linguagem de Programação: Utilize a linguagem predominante no projeto (assumo Python, mas adapte se for outra).
+
+Gestão de APIs: Utilize as credenciais de API já configuradas para cada serviço (Gemini, Grok, Cohere, OpenRouter).
+
+Assincronicidade: Implemente chamadas de API de forma assíncrona (usando async/await ou equivalente) para as etapas paralelas, a fim de minimizar a latência.
+
+Estrutura de Código:
+
+Crie uma nova função ou módulo para encapsular a lógica do "Modo Colaborativo AI".
+
+Garanta que a nova funcionalidade se integre de forma limpa e modular com o código existente.
+
+Inclua tratamento de erros para falhas nas chamadas de API ou respostas inesperadas.
+
+Gerenciamento de Tokens/Contexto: Esteja ciente dos limites de tokens das APIs ao enviar as respostas das IAs entre si. Se necessário, implemente estratégias de resumo para que as respostas caibam no contexto, priorizando as informações mais relevantes para a crítica cruzada.
+
+Modificação da UI (Menu Principal):
+
+Novo Botão: Adicione um novo botão ao menu principal do aplicativo.
+
+Estilo: O estilo deste botão deve ser consistente com o novo design visual moderno, intuitivo e bonito que foi definido para a tela inicial (e que será expandido para o resto da UI).
+
+Texto/Ícone: O botão pode ter o texto "Modo Colaborativo AI" ou "Análise Colaborativa" e um ícone que remeta a colaboração, interação ou pensamento em equipe (ex: duas ou mais cabeças pensando juntas, um símbolo de interligação).
+
+Ação: Ao clicar, este botão deve iniciar o fluxo da "Fase de Interação Multi-Agente" descrita acima.

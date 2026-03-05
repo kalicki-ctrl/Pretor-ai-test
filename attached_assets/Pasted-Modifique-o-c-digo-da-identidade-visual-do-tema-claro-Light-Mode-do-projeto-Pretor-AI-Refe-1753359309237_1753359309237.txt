@@ -1,0 +1,32 @@
+Modifique o código da identidade visual do tema claro ('Light Mode') do projeto "Pretor AI".
+
+**Referência Visual do Modo Dark:** Considere a estética da imagem `image_4b4522.jpg` para a identidade visual do modo escuro a ser traduzida.
+
+**Objetivo da Modificação (Tema Claro):**
+O tema claro deve ser **suave aos olhos**, com **bom contraste de cores**, **visual moderno**, e **mantendo a cor principal de destaque do tema dark (o tom dourado/bronze)**, adaptada para um fundo claro. As cores secundárias de destaque (roxo/azul e amarelo/laranja dos ícones em `image_4b4522.jpg`) também devem ser adaptadas.
+
+**Instruções Específicas de Alteração (Ações no Código):**
+
+1.  **Cores de Fundo:**
+    * **Fundo Principal da Aplicação:** Altere para um cinza muito claro e suave, como `#F8F8F8` ou `#F5F7F9`.
+    * **Fundos de Cards/Painéis:** Altere para `#FFFFFF` ou um cinza muito sutilmente mais escuro que o fundo principal (ex: `#FCFCFC`). Adicione uma sombra sutil (ex: `box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);`).
+2.  **Cores de Texto:**
+    * **Texto Primário:** Defina um cinza escuro, como `#333333` ou `#212121`.
+    * **Texto Secundário:** Use um cinza médio, como `#666666` ou `#757575`.
+    * **Texto Desabilitado/Placeholder:** Utilize um cinza claro, como `#AAAAAA`.
+3.  **Cores de Destaque / Interativas (Adaptação da Paleta do Modo Dark):**
+    * **Cor Principal (Antigo Dourado/Bronze):** Adapte o tom dourado/bronze para um tom de **âmbar escuro, bronze mais terroso ou laranja queimado** que seja legível em fundos claros. Ex: `#B8860B`, `#DAA520`, ou `#E4A11B`. **Escolha a opção que você julgar mais harmoniosa e moderna no contexto claro.**
+    * **Cores Secundárias (Roxo/Azul e Amarelo/Laranja dos Ícones):** Adapte esses tons para versões que funcionem bem em fundos claros, mantendo sua distinção.
+    * **Cores de Status/Indicadores:** Adapte o verde pontual (do status 'Brasil') para um tom como `#28A745`.
+4.  **Bordas e Separadores:**
+    * Defina bordas e separadores como um cinza muito claro (`#E0E0E0` ou `#DEDEDE`).
+5.  **Estados Interativos (Hover, Active, Disabled):**
+    * Defina estilos claros para `hover` (fundo ligeiramente mais escuro ou borda sutil), `active` (tom mais escuro da cor de destaque principal) e `disabled` (texto e fundo esmaecidos).
+6.  **Tipografia:**
+    * Ajuste `font-weight` e `line-height` se necessário para melhor legibilidade em fundos claros, mantendo a família de fontes existente.
+
+**Estrutura de Código:**
+Modifique as variáveis CSS (ou SCSS, ou objetos de tema em JS) que controlam essas cores. Priorize arquivos de tema ou variáveis globais. Adicione comentários onde as cores foram alteradas.
+
+**Saída:**
+Ao finalizar, informe quais arquivos foram modificados e forneça um resumo das principais alterações de cor e estilo aplicadas no código do tema claro.

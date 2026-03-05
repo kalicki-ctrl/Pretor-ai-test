@@ -1,0 +1,67 @@
+# ===================================================
+# PRETOR AI — .gitignore para segurança no GitHub
+# ===================================================
+
+# ─── DADOS SENSÍVEIS (CRÍTICO) ─────────────────────
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.*.local
+
+# ─── DEPENDÊNCIAS ──────────────────────────────────
+node_modules/
+.pythonlibs/
+
+# ─── BUILD E COMPILAÇÃO ───────────────────────────
+dist/
+build/
+*.tar.gz
+*.tgz
+
+# ─── CACHE E ARQUIVOS TEMPORÁRIOS ─────────────────
+.cache/
+.upm/
+tmp/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# ─── REPLIT (específicos do ambiente) ──────────────
+.config/
+.local/
+generated-icon.png
+server/public/
+
+# ─── SISTEMA OPERACIONAL ──────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ─── TYPESCRIPT / VITE ────────────────────────────
+vite.config.ts.*
+*.tsbuildinfo
+node_modules/.cache/
+
+# ─── BANCO DE DADOS LOCAL ─────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+local.db
+
+# ─── EDITOR / IDE ─────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ─── PYTHON (script app.py) ──────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/

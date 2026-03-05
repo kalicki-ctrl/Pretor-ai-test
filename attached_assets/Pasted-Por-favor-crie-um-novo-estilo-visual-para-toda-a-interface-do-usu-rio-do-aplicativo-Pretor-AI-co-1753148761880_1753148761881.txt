@@ -1,0 +1,49 @@
+Por favor, crie um novo estilo visual para toda a interface do usuário do aplicativo 'Pretor AI', com exceção da tela inicial já existente. O aplicativo é uma ferramenta de produtividade premium que utiliza múltiplas IAs para pesquisa e análise aprofundada, com foco em confiabilidade e transparência para pesquisadores, analistas e estudantes avançados.
+
+Objetivo do Redesign:
+Desenvolver uma identidade visual moderna, intuitiva, bonita e funcional para todas as telas e elementos da interface do 'Pretor AI', garantindo consistência e uma experiência de usuário coesa e agradável.
+
+Base de Estilo:
+O novo design visual deve ser fortemente baseado no estilo da tela inicial já definida (referência visual fornecida anteriormente). Mantenha e expanda os seguintes elementos:
+
+Tema Escuro: A paleta de cores predominante deve continuar sendo o tema escuro, com um fundo sóbrio e elegante.
+
+Cores de Destaque: As cores de destaque presentes na tela inicial (verde, amarelo/laranja e o cinza claro/branco) devem ser usadas de forma consistente para indicar interatividade, estados ativos, informações importantes e hierarquia visual.
+
+Tipografia: A escolha de fontes e a hierarquia tipográfica da tela inicial devem ser mantidas e aplicadas em toda a interface.
+
+Sensação Geral: A atmosfera de limpeza, profissionalismo e tecnologia avançada da tela inicial deve ser replicada em todas as outras seções do aplicativo.
+
+Elementos Visuais Sutis: Quaisquer elementos visuais sutis presentes na tela inicial (ex: sutis gradientes, sombras leves, formas geométricas discretas) devem ser considerados como parte do vocabulário visual a ser expandido.
+
+Áreas Específicas para o Novo Design Visual:
+
+Aplique o novo estilo visual aos seguintes elementos e telas (exemplos):
+
+Painéis de Resultados da "Pesquisa Profunda": Como as respostas consolidadas do Gemini e as análises de divergências/convergências serão apresentadas? Pense em layouts claros para comparar informações e destacar insights.
+
+Visualização das Respostas Individuais das IAs: Como as respostas de cada uma das 4 IAs serão exibidas de forma organizada e fácil de comparar?
+
+Histórico de Consultas: Como o histórico de prompts e resultados será apresentado? Considere organização, filtros e opções de busca.
+
+Configurações do Usuário: Como as opções de personalização (ex: preferências de IA, configurações de exibição) serão apresentadas? Crie formulários intuitivos e claros.
+
+Barra de Navegação/Menu Principal (se houver outras telas de nível superior além da inicial): Como a navegação entre as diferentes seções do aplicativo será feita de forma consistente com o estilo?
+
+Tabelas de Dados e Gráficos (se aplicável): Como os dados serão visualizados de forma clara e moderna, utilizando as cores e a tipografia definidas?
+
+Alertas e Notificações: Como mensagens de sucesso, erro ou informativas serão exibidas de forma discreta e consistente com o visual?
+
+Modais e Pop-ups: Como janelas de diálogo e informações adicionais serão apresentadas?
+
+Iconografia: Crie um conjunto de ícones minimalistas e modernos que se integrem perfeitamente ao estilo visual e representem as diversas funcionalidades e informações do aplicativo.
+
+Princípios de Design:
+
+Consistência: Mantenha a consistência visual em todos os elementos e telas para criar uma experiência de usuário coesa.
+
+Intuitividade: O design deve guiar o usuário de forma clara, facilitando a compreensão e a interação com as funcionalidades do aplicativo.
+
+Funcionalidade: A estética deve complementar a funcionalidade, garantindo que os elementos sejam fáceis de usar e entender.
+
+Hierarquia Visual: Use tamanho, cor e espaçamento para criar uma hierarquia clara das informações e guiar o olhar do usuário.
