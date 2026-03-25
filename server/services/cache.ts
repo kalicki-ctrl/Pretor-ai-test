@@ -1,5 +1,6 @@
 
 import { createClient } from 'redis';
+import { createHash } from 'crypto';
 
 let client: any = null;
 let isRedisAvailable = false;
@@ -7,11 +8,11 @@ let isRedisAvailable = false;
 const initializeRedis = async () => {
     // Skip Redis initialization if no Redis URL is provided
     if (!process.env.REDIS_URL) {
-        console.log('⚠️  Redis URL não configurada, usando modo sem cache');
+        console.log('Redis URL não configurada, usando modo sem cache');
         isRedisAvailable = false;
         return;
     }
-    
+
     try {
         client = createClient({
             url: process.env.REDIS_URL,
@@ -20,7 +21,7 @@ const initializeRedis = async () => {
                 commandTimeout: 5000
             }
         });
-        
+
         client.on('error', (err: any) => {
             console.log('Redis Client Error', err);
             isRedisAvailable = false;
@@ -28,9 +29,9 @@ const initializeRedis = async () => {
 
         await client.connect();
         isRedisAvailable = true;
-        console.log('✅ Conectado ao Redis');
+        console.log('Conectado ao Redis');
     } catch (error) {
-        console.log('❌ Erro ao conectar ao Redis, continuando sem cache:', error);
+        console.log('Erro ao conectar ao Redis, continuando sem cache:', error);
         isRedisAvailable = false;
         client = null;
     }
@@ -42,10 +43,9 @@ export const connectRedis = async () => {
 
 export const setCache = async (key: string, value: any, ttl: number = 3600) => {
     if (!isRedisAvailable || !client) {
-        console.log('Redis não disponível, cache ignorado');
         return;
     }
-    
+
     try {
         await client.setEx(key, ttl, JSON.stringify(value));
     } catch (error) {
@@ -58,7 +58,7 @@ export const getCache = async (key: string) => {
     if (!isRedisAvailable || !client) {
         return null;
     }
-    
+
     try {
         const data = await client.get(key);
         return data ? JSON.parse(data) : null;
@@ -69,24 +69,11 @@ export const getCache = async (key: string) => {
     }
 };
 
-export const deleteCache = async (key: string) => {
-    if (!isRedisAvailable || !client) {
-        return;
-    }
-    
-    try {
-        await client.del(key);
-    } catch (error) {
-        console.log('Erro ao deletar cache:', error);
-        isRedisAvailable = false;
-    }
-};
-
 export const closeRedis = async () => {
     if (!client) {
         return;
     }
-    
+
     try {
         await client.quit();
         console.log('Redis desconectado');
@@ -95,9 +82,10 @@ export const closeRedis = async () => {
     }
 };
 
-// Função para gerar chave de cache baseada no conteúdo do prompt
+// Generate a non-reversible cache key using SHA-256 hash
 export const generateCacheKey = (prompt: string, aiWeights?: Record<string, number>): string => {
-    const promptHash = Buffer.from(prompt).toString('base64').slice(0, 50);
+    const promptHash = createHash('sha256').update(prompt).digest('hex').slice(0, 32);
     const weightsString = aiWeights ? JSON.stringify(aiWeights) : '';
-    return `analysis:${promptHash}:${weightsString}`;
+    const weightsHash = weightsString ? createHash('sha256').update(weightsString).digest('hex').slice(0, 16) : '';
+    return `analysis:${promptHash}:${weightsHash}`;
 };

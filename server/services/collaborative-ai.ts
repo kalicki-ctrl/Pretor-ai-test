@@ -1,10 +1,10 @@
+import { createHash } from 'crypto';
 import { AIService } from './ai-apis';
 
 interface RoundHistory {
   roundNumber: number;
   response: string;
   reasoning: string;
-  confidence: number;
   timestamp: string;
 }
 
@@ -15,7 +15,7 @@ interface CollaborativeResponse {
   initialResponse: string;
   refinedResponse: string;
   reasoning: string;
-  confidence: number;
+  confidence: number | null; // null — no real quality evaluation is performed
   color: string;
   roundHistory?: RoundHistory[];
 }
@@ -31,8 +31,9 @@ interface AIAgent {
 export class CollaborativeAIService {
   private aiService: AIService;
   private cache = new Map<string, any>();
-  
-  // IAs participantes da colaboração (Gemini é juiz/coordenador)
+  private static readonly MAX_CACHE_ENTRIES = 100;
+
+  // IAs participantes da colaboração
   private aiAgents: AIAgent[] = [
     { id: 'grok', name: 'Grok', provider: 'OpenRouter', color: 'bg-green-500', serviceName: 'openrouter' },
     { id: 'llama3', name: 'Llama 3', provider: 'Groq', color: 'bg-orange-500', serviceName: 'groq' },
@@ -43,30 +44,33 @@ export class CollaborativeAIService {
     this.aiService = new AIService();
   }
 
+  // FIFO eviction when cache exceeds max size
+  private setCacheEntry(key: string, value: any): void {
+    if (this.cache.size >= CollaborativeAIService.MAX_CACHE_ENTRIES) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    this.cache.set(key, value);
+  }
+
   async generateInitialResponses(prompt: string): Promise<CollaborativeResponse[]> {
-    console.log('🚀 Iniciando Rodada 1: Gerando hipóteses iniciais para todas as IAs');
-    
-    const cacheKey = `initial_${Buffer.from(prompt).toString('base64').slice(0, 16)}`;
+    const cacheKey = createHash('sha256').update(prompt).digest('hex').slice(0, 32);
     if (this.cache.has(cacheKey)) {
-      console.log('✅ Cache hit para respostas iniciais');
       return this.cache.get(cacheKey);
     }
-    
+
     const responses: CollaborativeResponse[] = [];
-    
-    // Paralelize calls for better performance
+
     const promises = this.aiAgents.map(async (agent) => {
       try {
-        console.log(`🤖 ${agent.name}: Gerando hipótese inicial...`);
-        
-        // Optimized shorter prompt
-        const enhancedPrompt = `Como ${agent.name}, analise: "${prompt}". Resposta concisa e objetiva.`;
+        // Use XML delimiters for user prompt (prompt injection mitigation)
+        const enhancedPrompt = `Como ${agent.name}, analise: <user_prompt>${prompt}</user_prompt>. Resposta concisa e objetiva.`;
 
         let aiResponse;
-        
+
         switch (agent.serviceName) {
           case 'openrouter':
-            aiResponse = agent.id === 'grok' 
+            aiResponse = agent.id === 'grok'
               ? await this.aiService.callOpenRouter(enhancedPrompt, 'x-ai/grok-beta')
               : await this.aiService.callOpenRouter(enhancedPrompt, 'meta-llama/llama-3.1-8b-instruct:free');
             break;
@@ -87,22 +91,20 @@ export class CollaborativeAIService {
           initialResponse: aiResponse.content,
           refinedResponse: '',
           reasoning: '',
-          confidence: Math.round(85 + Math.random() * 10),
+          confidence: null,
           color: agent.color,
           roundHistory: [{
             roundNumber: 0,
             response: aiResponse.content,
             reasoning: "Hipótese inicial independente",
-            confidence: Math.round(85 + Math.random() * 10),
             timestamp: new Date().toISOString()
           }]
         };
 
-        console.log(`✅ ${agent.name}: Hipótese inicial gerada`);
         return response;
 
       } catch (error) {
-        console.error(`❌ Erro ${agent.name}:`, error);
+        console.error(`Erro ${agent.name}:`, error);
         return {
           id: agent.id,
           name: agent.name,
@@ -110,7 +112,7 @@ export class CollaborativeAIService {
           initialResponse: `Erro: ${error instanceof Error ? error.message : 'Desconhecido'}`,
           refinedResponse: '',
           reasoning: '',
-          confidence: 0,
+          confidence: null,
           color: agent.color,
           roundHistory: []
         };
@@ -120,43 +122,33 @@ export class CollaborativeAIService {
     try {
       const results = await Promise.all(promises);
       responses.push(...results);
-      
-      // Cache successful results
-      if (results.every(r => r.confidence > 0)) {
-        this.cache.set(cacheKey, responses);
+
+      if (results.every(r => r.initialResponse && !r.initialResponse.startsWith('Erro:'))) {
+        this.setCacheEntry(cacheKey, responses);
       }
-      
-      console.log('✅ Rodada 1 concluída: Todas as hipóteses iniciais geradas');
+
       return responses;
     } catch (error) {
-      console.error('❌ Erro crítico na geração de hipóteses iniciais:', error);
+      console.error('Erro crítico na geração de hipóteses iniciais:', error);
       throw error;
     }
   }
 
   async refineResponses(prompt: string, initialResponses: CollaborativeResponse[]): Promise<CollaborativeResponse[]> {
-    console.log('🔄 Iniciando Sistema de Refinamento Adaptativo com Gemini como Juiz');
-    
     let currentResponses = [...initialResponses];
     let round = 1;
-    const maxRounds = 8; // Reduced for performance
+    const maxRounds = 4; // Reduced from 8 to limit LLM cost per request
 
     while (round <= maxRounds) {
-      console.log(`🔄 Rodada ${round}: Refinamento colaborativo`);
-      
-      // Parallel refinement
       const refinementPromises = currentResponses.map(async (currentResponse) => {
         try {
-          console.log(`🧠 ${currentResponse.name}: Analisando respostas das outras IAs...`);
-          
           const otherResponses = currentResponses
             .filter(r => r.id !== currentResponse.id)
             .map(r => `${r.name}: ${r.refinedResponse || r.initialResponse}`)
             .join('\n\n');
 
-          // Optimized refinement prompt
           const refinementPrompt = `
-Prompt original: "${prompt}"
+Prompt original: <user_prompt>${prompt}</user_prompt>
 Outras análises:
 ${otherResponses}
 
@@ -189,53 +181,48 @@ Raciocínio: [por que mudou/manteve]`;
 
           const fullResponse = aiResponse.content;
           const responseMatch = fullResponse.match(/Resposta Refinada:\s*(.*?)(?=\n.*?Raciocínio:|$)/);
-          const reasoningMatch = fullResponse.match(/Raciocínio:\s*(.*)/);  
+          const reasoningMatch = fullResponse.match(/Raciocínio:\s*(.*)/);
 
           const newResponse = responseMatch ? responseMatch[1].trim() : fullResponse;
           const newReasoning = reasoningMatch ? reasoningMatch[1].trim() : `Análise refinada na rodada ${round}`;
-          const newConfidence = Math.round(85 + round * 2 + Math.random() * 5);
 
           const refinedResponse: CollaborativeResponse = {
             ...currentResponse,
             refinedResponse: newResponse,
             reasoning: newReasoning,
-            confidence: newConfidence,
+            confidence: null, // No real quality evaluation
             roundHistory: [
               ...(currentResponse.roundHistory || []),
               {
                 roundNumber: round,
                 response: newResponse,
                 reasoning: newReasoning,
-                confidence: newConfidence,
                 timestamp: new Date().toISOString()
               }
             ]
           };
 
-          console.log(`✅ ${currentResponse.name}: Rodada ${round} concluída`);
           return refinedResponse;
 
         } catch (error) {
-          console.error(`❌ Erro ${currentResponse.name} rodada ${round}:`, error);
-          return currentResponse; // Keep previous version on error
+          console.error(`Erro ${currentResponse.name} rodada ${round}:`, error);
+          return currentResponse;
         }
       });
 
       try {
         currentResponses = await Promise.all(refinementPromises);
-        console.log(`✅ Rodada ${round} concluída para todas as IAs`);
 
-        // Judge evaluation - Gemini decides after minimum 3 rounds
-        const shouldContinue = await this.evaluateWithGemini(prompt, currentResponses, round);
-        
+        // Deterministic stop decision based on content convergence (not fake scores)
+        const shouldContinue = this.shouldContinueRefinement(currentResponses, round, maxRounds);
+
         if (!shouldContinue) {
-          console.log(`✅ Sistema de refinamento colaborativo concluído: ${round} rodadas totais`);
           break;
         }
 
         round++;
       } catch (error) {
-        console.error(`❌ Erro crítico na rodada ${round}:`, error);
+        console.error(`Erro crítico na rodada ${round}:`, error);
         break;
       }
     }
@@ -243,52 +230,41 @@ Raciocínio: [por que mudou/manteve]`;
     return currentResponses;
   }
 
-  private async evaluateWithGemini(prompt: string, responses: CollaborativeResponse[], round: number): Promise<boolean> {
-    try {
-      console.log('🤖 Gemini: Avaliando necessidade de rodadas adicionais...');
-      
-      // Enforce minimum 3 rounds requirement
-      if (round < 3) {
-        console.log(`🔄 Gemini: Rodada ${round} de 3 mínimas - continuando automaticamente`);
-        return true;
-      }
-
-      // After 3 rounds, let Gemini decide based on quality
-      console.log('🤖 Gemini: Número mínimo atingido - avaliando qualidade das respostas...');
-      
-      // Quick quality assessment for performance
-      const avgConfidence = responses.reduce((sum, r) => sum + r.confidence, 0) / responses.length;
-      const hasLowConfidence = responses.some(r => r.confidence < 85);
-      const maxRounds = 8; // Maximum limit to prevent infinite loops
-      
-      // Decision logic: continue if quality is still improvable and under max rounds
-      const shouldContinue = (avgConfidence < 90 || hasLowConfidence) && round < maxRounds;
-      
-      if (shouldContinue) {
-        console.log(`🔄 Gemini decidiu: Necessário continuar - rodada ${round + 1} (confiança média: ${Math.round(avgConfidence)}%)`);
-      } else {
-        console.log(`✅ Gemini decidiu: Qualidade suficiente alcançada após ${round} rodadas (confiança média: ${Math.round(avgConfidence)}%)`);
-      }
-      
-      return shouldContinue;
-    } catch (error) {
-      console.error('❌ Erro na avaliação Gemini:', error);
-      // If evaluation fails after minimum rounds, stop
-      return round < 3;
+  // Deterministic stop condition — no fake quality evaluation
+  // Stops after minimum 3 rounds, or earlier if responses haven't changed
+  private shouldContinueRefinement(responses: CollaborativeResponse[], round: number, maxRounds: number): boolean {
+    // Always do at least 3 rounds
+    if (round < 3) {
+      return true;
     }
+
+    // Stop at max rounds
+    if (round >= maxRounds) {
+      return false;
+    }
+
+    // Check if responses changed meaningfully in this round
+    // Compare latest refined response against previous round
+    const significantChange = responses.some(r => {
+      const history = r.roundHistory || [];
+      if (history.length < 2) return true;
+      const latest = history[history.length - 1]?.response || '';
+      const previous = history[history.length - 2]?.response || '';
+      // If content length changed by more than 10%, consider it significant
+      const lengthDiff = Math.abs(latest.length - previous.length);
+      return lengthDiff > previous.length * 0.1;
+    });
+
+    return significantChange;
   }
 
   async generateFinalSynthesis(prompt: string, refinedResponses: CollaborativeResponse[]): Promise<any> {
     try {
-      console.log('🎯 Collaborative AI: Iniciando síntese final');
-      console.log('🎯 Iniciando síntese final com Gemini');
-
-      // Optimized synthesis prompt
       const responsesText = refinedResponses
-        .map(r => `${r.name}: ${r.refinedResponse}\nConfiança: ${r.confidence}%`)
+        .map(r => `${r.name}: ${r.refinedResponse}`)
         .join('\n\n');
 
-      const synthesisPrompt = `Prompt: "${prompt}"
+      const synthesisPrompt = `Prompt: <user_prompt>${prompt}</user_prompt>
 
 Análises colaborativas:
 ${responsesText}
@@ -302,16 +278,14 @@ Crie uma síntese final integrativa e concisa considerando todas as perspectivas
         synthesisMetadata: {
           totalAIs: refinedResponses.length,
           totalInteractions: refinedResponses.reduce((sum, r) => sum + (r.roundHistory?.length || 1), 0),
-          averageConfidence: Math.round(refinedResponses.reduce((sum, r) => sum + r.confidence, 0) / refinedResponses.length),
           timestamp: new Date().toISOString()
         }
       };
 
-      console.log('✅ Síntese final concluída com sucesso');
       return synthesis;
 
     } catch (error) {
-      console.error('❌ Erro na síntese final:', error);
+      console.error('Erro na síntese final:', error);
       throw error;
     }
   }
