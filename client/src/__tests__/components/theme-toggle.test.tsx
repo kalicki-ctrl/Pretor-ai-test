@@ -9,6 +9,11 @@ function Wrapper({ children }: { children: React.ReactNode }) {
   return <ThemeProvider>{children}</ThemeProvider>;
 }
 
+beforeEach(() => {
+  document.documentElement.classList.remove('dark');
+  document.documentElement.removeAttribute('data-theme');
+});
+
 describe('ThemeToggle', () => {
   it('renders a button', () => {
     render(<ThemeToggle />, { wrapper: Wrapper });
@@ -18,7 +23,6 @@ describe('ThemeToggle', () => {
   it('clicking the button toggles the theme', async () => {
     render(<ThemeToggle />, { wrapper: Wrapper });
     const button = screen.getByRole('button');
-    // Initially light theme → shows Moon icon; sr-only says "Toggle theme"
     expect(document.documentElement.classList.contains('dark')).toBe(false);
     await userEvent.click(button);
     expect(document.documentElement.classList.contains('dark')).toBe(true);

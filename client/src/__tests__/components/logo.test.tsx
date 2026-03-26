@@ -21,7 +21,6 @@ describe('Logo', () => {
     const smDiv = smContainer.firstChild as HTMLElement;
     const lgDiv = lgContainer.firstChild as HTMLElement;
 
-    // sm → w-10 h-10, lg → w-20 h-20
     expect(smDiv.className).toContain('w-10');
     expect(lgDiv.className).toContain('w-20');
   });
@@ -36,14 +35,11 @@ describe('Logo', () => {
     render(<Logo />, { wrapper: Wrapper });
     const img = screen.getByRole('img', { name: /pretor ai logo/i });
 
-    // The fallback sibling starts hidden
     const fallback = img.nextElementSibling as HTMLElement;
     expect(fallback.classList.contains('hidden')).toBe(true);
 
-    // Trigger error event
     fireEvent.error(img);
 
-    // Image should be hidden and fallback visible
     expect(img.style.display).toBe('none');
     expect(fallback.classList.contains('hidden')).toBe(false);
   });
