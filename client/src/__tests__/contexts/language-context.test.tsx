@@ -13,6 +13,16 @@ function TestComponent() {
   );
 }
 
+async function renderInProvider() {
+  await act(async () => {
+    render(
+      <LanguageProvider>
+        <TestComponent />
+      </LanguageProvider>
+    );
+  });
+}
+
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
     ok: true,
@@ -35,13 +45,7 @@ afterEach(() => {
 
 describe('LanguageProvider', () => {
   test('default language is en-US initially', async () => {
-    await act(async () => {
-      render(
-        <LanguageProvider>
-          <TestComponent />
-        </LanguageProvider>
-      );
-    });
+    await renderInProvider();
     await waitFor(() => {
       expect(screen.getByTestId('language').textContent).toBe('en-US');
     });
@@ -49,39 +53,21 @@ describe('LanguageProvider', () => {
 
   test('setLanguage updates language in context', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <LanguageProvider>
-          <TestComponent />
-        </LanguageProvider>
-      );
-    });
+    await renderInProvider();
     await user.click(screen.getByText('set-pt'));
     expect(screen.getByTestId('language').textContent).toBe('pt-BR');
   });
 
   test('setLanguage saves to localStorage', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <LanguageProvider>
-          <TestComponent />
-        </LanguageProvider>
-      );
-    });
+    await renderInProvider();
     await user.click(screen.getByText('set-pt'));
     expect(localStorage.getItem('preferredLanguage')).toBe('pt-BR');
   });
 
   test('loads saved language from localStorage on mount', async () => {
     localStorage.setItem('preferredLanguage', 'pt-BR');
-    await act(async () => {
-      render(
-        <LanguageProvider>
-          <TestComponent />
-        </LanguageProvider>
-      );
-    });
+    await renderInProvider();
     await waitFor(() => {
       expect(screen.getByTestId('language').textContent).toBe('pt-BR');
     });
@@ -89,13 +75,7 @@ describe('LanguageProvider', () => {
 
   test('document.documentElement.lang is updated on language change', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <LanguageProvider>
-          <TestComponent />
-        </LanguageProvider>
-      );
-    });
+    await renderInProvider();
     await user.click(screen.getByText('set-pt'));
     expect(document.documentElement.lang).toBe('pt');
   });

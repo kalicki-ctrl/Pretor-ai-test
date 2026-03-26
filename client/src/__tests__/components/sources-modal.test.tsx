@@ -48,7 +48,6 @@ describe('SourcesModal', () => {
   it('calls onClose when close button is clicked', () => {
     const onClose = vi.fn();
     renderModal({ onClose });
-    // The close button has an X icon; find by role
     const closeButton = screen.getByRole('button');
     fireEvent.click(closeButton);
     expect(onClose).toHaveBeenCalledTimes(1);

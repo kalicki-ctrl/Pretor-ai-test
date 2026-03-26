@@ -1,22 +1,22 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, beforeEach, afterEach } from 'vitest';
+import { vi, afterEach } from 'vitest';
 import { ImageSearchMode } from '@/components/image-search-mode';
 import { getTranslation } from '@/lib/translations';
 
-// Mock useLanguage hook
+const translations = getTranslation('en-US');
+
 vi.mock('@/contexts/language-context', () => ({
   useLanguage: () => ({
     language: 'en-US',
-    translations: getTranslation('en-US'),
+    translations,
     setLanguage: vi.fn(),
     detectedLocation: null,
     isDetecting: false,
   }),
 }));
 
-// Mock heavy sub-components
 vi.mock('@/components/ai-progress-tracker', () => ({
   AIProgressTracker: () => <div data-testid="ai-progress-tracker" />,
 }));
@@ -34,7 +34,6 @@ vi.mock('@/components/sources-modal', () => ({
     isOpen ? <div data-testid="sources-modal" /> : null,
 }));
 
-// Mock FileReader
 global.FileReader = class {
   result = 'data:image/jpeg;base64,/9j/fakeimagedatahere';
   onload: ((e: any) => void) | null = null;
@@ -45,7 +44,6 @@ global.FileReader = class {
   }
 } as any;
 
-// Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -54,19 +52,13 @@ function renderImageSearchMode(onBack = vi.fn()) {
 }
 
 describe('ImageSearchMode', () => {
-  beforeEach(() => {
-    mockFetch.mockReset();
-  });
-
   afterEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders image upload area', () => {
     renderImageSearchMode();
-    expect(
-      screen.getByText(/Selecione uma imagem para análise/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Selecione uma imagem para análise/i)).toBeInTheDocument();
   });
 
   it('renders prompt input (textarea)', () => {
@@ -77,22 +69,14 @@ describe('ImageSearchMode', () => {
   it('renders back button and calls onBack when clicked', () => {
     const onBack = vi.fn();
     renderImageSearchMode(onBack);
-    // The back button has ArrowLeft icon, no accessible name — find by role + position
-    const buttons = screen.getAllByRole('button');
-    // The first button is the back (ghost/icon) button
-    fireEvent.click(buttons[0]);
+    fireEvent.click(screen.getAllByRole('button')[0]);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('shows image preview after file is selected', async () => {
     renderImageSearchMode();
-
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    expect(fileInput).not.toBeNull();
-
-    const file = new File(['fake'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    fireEvent.change(fileInput, { target: { files: [new File(['fake'], 'test.jpg', { type: 'image/jpeg' })] } });
     await waitFor(() => {
       expect(screen.getByRole('img', { name: /preview/i })).toBeInTheDocument();
     });
@@ -100,60 +84,35 @@ describe('ImageSearchMode', () => {
 
   it('analyze button is disabled when no image is selected', () => {
     renderImageSearchMode();
-    // Type enough chars but no image
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'enough text here' } });
-
-    const analyzeButton = screen.getByRole('button', { name: /analy/i });
-    expect(analyzeButton).toBeDisabled();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'enough text here' } });
+    expect(screen.getByRole('button', { name: /analy/i })).toBeDisabled();
   });
 
   it('analyze button is disabled when prompt has fewer than 5 chars', async () => {
     renderImageSearchMode();
-
-    // Select an image first
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(['fake'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    fireEvent.change(fileInput, { target: { files: [new File(['fake'], 'test.jpg', { type: 'image/jpeg' })] } });
     await waitFor(() => {
       expect(screen.getByRole('img', { name: /preview/i })).toBeInTheDocument();
     });
-
-    // Type only 3 chars
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'abc' } });
-
-    const analyzeButton = screen.getByRole('button', { name: /analy/i });
-    expect(analyzeButton).toBeDisabled();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'abc' } });
+    expect(screen.getByRole('button', { name: /analy/i })).toBeDisabled();
   });
 
   it('calls fetch to /api/analyze-image-advanced on valid submit', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        success: true,
-        promptId: 1,
-        responses: {},
-        llamaAnalysis: null,
-        imageExtraction: null,
-      }),
+      json: async () => ({ success: true, promptId: 1, responses: {}, llamaAnalysis: null, imageExtraction: null }),
     });
 
     renderImageSearchMode();
-
-    // Select an image
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(['fake'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    fireEvent.change(fileInput, { target: { files: [new File(['fake'], 'test.jpg', { type: 'image/jpeg' })] } });
     await waitFor(() => {
       expect(screen.getByRole('img', { name: /preview/i })).toBeInTheDocument();
     });
 
-    // Type a prompt with at least 5 chars
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'Describe this image' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Describe this image' } });
 
     const analyzeButton = screen.getByRole('button', { name: /analy/i });
     expect(analyzeButton).not.toBeDisabled();
@@ -169,18 +128,13 @@ describe('ImageSearchMode', () => {
 
   it('remove image button clears the image preview', async () => {
     renderImageSearchMode();
-
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    const file = new File(['fake'], 'test.jpg', { type: 'image/jpeg' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
+    fireEvent.change(fileInput, { target: { files: [new File(['fake'], 'test.jpg', { type: 'image/jpeg' })] } });
     await waitFor(() => {
       expect(screen.getByRole('img', { name: /preview/i })).toBeInTheDocument();
     });
 
-    // The remove button shows "×"
-    const removeButton = screen.getByRole('button', { name: /×/i });
-    fireEvent.click(removeButton);
+    fireEvent.click(screen.getByRole('button', { name: /×/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('img', { name: /preview/i })).not.toBeInTheDocument();
