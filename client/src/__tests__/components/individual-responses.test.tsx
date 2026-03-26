@@ -1,17 +1,10 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { render, screen, act, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { LanguageProvider } from '@/contexts/language-context';
 import { IndividualResponses } from '@/components/individual-responses';
 
-// Mock fetch for language detection
-global.fetch = vi.fn().mockResolvedValue({
-  json: () => Promise.resolve({ success: false }),
-} as any);
-
-// Mock clipboard API (jsdom doesn't support it natively)
 const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
 Object.defineProperty(navigator, 'clipboard', {
   value: { writeText: clipboardWriteText },
@@ -25,7 +18,6 @@ const mockResponses = {
   cohere: { content: '', error: 'API key not configured', responseTime: 0, tokens: 0 },
 };
 
-// Long content for truncation tests
 const longContent = 'A'.repeat(300);
 const mockResponsesLong = {
   groq: { content: longContent, responseTime: 1500, tokens: 200 },
@@ -39,11 +31,17 @@ function renderResponses(responses = mockResponses) {
   return render(<IndividualResponses responses={responses} />, { wrapper: Wrapper });
 }
 
-describe('IndividualResponses', () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
+beforeEach(() => {
+  global.fetch = vi.fn().mockResolvedValue({
+    json: () => Promise.resolve({ success: false }),
+  } as any);
+});
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('IndividualResponses', () => {
   it('renders response cards for providers with content', async () => {
     await act(async () => {
       renderResponses();
@@ -63,10 +61,8 @@ describe('IndividualResponses', () => {
     await act(async () => {
       renderResponses(mockResponsesLong);
     });
-    // Content should be truncated to 200 chars + "..."
     const truncated = longContent.substring(0, 200) + '...';
     expect(screen.getByText(truncated)).toBeInTheDocument();
-    // Full content (300 chars) should not be fully rendered in DOM
     expect(screen.queryByText(longContent)).not.toBeInTheDocument();
   });
 
@@ -75,13 +71,11 @@ describe('IndividualResponses', () => {
       renderResponses(mockResponsesLong);
     });
 
-    // Find and click the expand button
     const showMoreButton = screen.getByRole('button', { name: /show more/i });
     await act(async () => {
       fireEvent.click(showMoreButton);
     });
 
-    // Full content should now be visible
     expect(screen.getByText(longContent)).toBeInTheDocument();
   });
 
@@ -102,9 +96,7 @@ describe('IndividualResponses', () => {
     await act(async () => {
       renderResponses();
     });
-    // 1500ms -> "1.5s"
     expect(screen.getByText(/1\.5s/)).toBeInTheDocument();
-    // 2000ms -> "2.0s"
     expect(screen.getByText(/2\.0s/)).toBeInTheDocument();
   });
 
