@@ -14,46 +14,37 @@ function TestComponent() {
   );
 }
 
+async function renderInProvider() {
+  await act(async () => {
+    render(
+      <ThemeProvider>
+        <TestComponent />
+      </ThemeProvider>
+    );
+  });
+}
+
 beforeEach(() => {
   localStorage.clear();
-  // Reset html element classes and attributes
   document.documentElement.className = '';
   document.documentElement.removeAttribute('data-theme');
 });
 
 describe('ThemeProvider', () => {
   test('default theme is light when no localStorage value', async () => {
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     expect(screen.getByTestId('theme').textContent).toBe('light');
   });
 
   test('loads dark from localStorage if previously saved', async () => {
     localStorage.setItem('theme', 'dark');
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     expect(screen.getByTestId('theme').textContent).toBe('dark');
   });
 
   test('toggleTheme switches from light to dark', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     expect(screen.getByTestId('theme').textContent).toBe('light');
     await user.click(screen.getByText('toggle'));
     expect(screen.getByTestId('theme').textContent).toBe('dark');
@@ -62,13 +53,7 @@ describe('ThemeProvider', () => {
   test('toggleTheme switches from dark to light', async () => {
     localStorage.setItem('theme', 'dark');
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     expect(screen.getByTestId('theme').textContent).toBe('dark');
     await user.click(screen.getByText('toggle'));
     expect(screen.getByTestId('theme').textContent).toBe('light');
@@ -76,35 +61,20 @@ describe('ThemeProvider', () => {
 
   test('setTheme dark saves dark to localStorage', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     await user.click(screen.getByText('set-dark'));
     expect(localStorage.getItem('theme')).toBe('dark');
   });
 
   test('changing theme updates document.documentElement', async () => {
     const user = userEvent.setup();
-    await act(async () => {
-      render(
-        <ThemeProvider>
-          <TestComponent />
-        </ThemeProvider>
-      );
-    });
+    await renderInProvider();
     await user.click(screen.getByText('set-dark'));
-    expect(
-      document.documentElement.classList.contains('dark') ||
-      document.documentElement.getAttribute('data-theme') === 'dark'
-    ).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 
   test('useTheme outside provider throws an error', () => {
-    // Suppress React error boundary console output
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     function BadComponent() {
       useTheme();

@@ -11,10 +11,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: 'node',
-    environmentMatchGlobs: [
-      [path.resolve(root, 'client/src/**/*.{ts,tsx}'), 'jsdom'],
-    ],
+    environment: 'jsdom',
     setupFiles: ['client/src/test/setup.ts'],
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['node_modules', 'dist'],
