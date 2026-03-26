@@ -6,7 +6,6 @@ import { cacheMiddleware } from '../middleware/compression';
 function buildApp() {
   const app = express();
   app.use(cacheMiddleware);
-  // A simple catch-all that always returns 200
   app.use((_req, res) => res.status(200).send('ok'));
   return app;
 }
@@ -82,10 +81,7 @@ describe('cacheMiddleware', () => {
 
     it('does not set Expires for /api/status', async () => {
       const res = await supertest(app).get('/api/status');
-      // If Expires is set it should NOT be set by this middleware (no header at all for non-static)
-      // The middleware only sets these for matched extensions
-      const cacheControl = res.headers['cache-control'];
-      expect(cacheControl).not.toBe('public, max-age=31536000');
+      expect(res.headers['expires']).toBeUndefined();
     });
   });
 });

@@ -29,7 +29,6 @@ describe('useIsMobile', () => {
   });
 
   it('returns true when viewport is mobile (matches: true)', () => {
-    // Set window.innerWidth to a mobile width so the hook's innerWidth check also passes
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
     mockMatchMedia(true);
 
