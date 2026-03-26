@@ -45,14 +45,12 @@ describe('useIsMobile', () => {
   });
 
   it('updates when resize event triggers a change', () => {
-    // Start as desktop
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     const { triggerChange } = mockMatchMedia(false);
 
     const { result } = renderHook(() => useIsMobile());
     expect(result.current).toBe(false);
 
-    // Simulate resize to mobile
     Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
     act(() => {
       triggerChange(true);

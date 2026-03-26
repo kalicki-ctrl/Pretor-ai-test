@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, useTheme } from '@/contexts/theme-context';

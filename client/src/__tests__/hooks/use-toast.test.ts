@@ -83,7 +83,7 @@ describe('useToast', () => {
   it('updates an existing toast via update()', () => {
     const { result } = renderHook(() => useToast());
 
-    let updateFn: (props: any) => void;
+    let updateFn: ReturnType<typeof result.current.toast>['update'];
     let toastId: string;
     act(() => {
       const { id, update } = result.current.toast({ title: 'Original' });
