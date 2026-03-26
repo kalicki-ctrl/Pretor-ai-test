@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { CollaborativeAIMode } from '@/components/collaborative-ai-mode';
 
@@ -120,83 +119,56 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const VALID_PROMPT = 'This is a valid prompt with enough chars';
+
+async function submitAndComplete() {
+  setupMockFetch();
+  render(<CollaborativeAIMode onBack={vi.fn()} />);
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: VALID_PROMPT } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar Colaboração AI/i }));
+  });
+  await act(async () => {
+    await vi.runAllTimersAsync();
+  });
+}
+
 describe('CollaborativeAIMode', () => {
   it('renders prompt input initially', () => {
-    const onBack = vi.fn();
-    render(<CollaborativeAIMode onBack={onBack} />);
+    render(<CollaborativeAIMode onBack={vi.fn()} />);
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
   it('submit button is disabled when input has fewer than 10 chars', () => {
     render(<CollaborativeAIMode onBack={vi.fn()} />);
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'short' } });
-    const submitBtn = screen.getByRole('button', { name: /Iniciar Colaboração AI/i });
-    expect(submitBtn).toBeDisabled();
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'short' } });
+    expect(screen.getByRole('button', { name: /Iniciar Colaboração AI/i })).toBeDisabled();
   });
 
   it('calls onBack when back button is clicked', () => {
     const onBack = vi.fn();
     render(<CollaborativeAIMode onBack={onBack} />);
-    const backBtn = screen.getByRole('button', { name: /Voltar/i });
-    fireEvent.click(backBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Voltar/i }));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('shows loading/processing state after submitting a valid prompt', async () => {
     setupMockFetch();
     render(<CollaborativeAIMode onBack={vi.fn()} />);
-
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'This is a valid prompt with enough chars' } });
-
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: VALID_PROMPT } });
     const submitBtn = screen.getByRole('button', { name: /Iniciar Colaboração AI/i });
     expect(submitBtn).not.toBeDisabled();
-
-    await act(async () => {
-      fireEvent.click(submitBtn);
-    });
-
-    // After clicking, a processing screen should be shown (no textarea anymore)
+    await act(async () => { fireEvent.click(submitBtn); });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
   it('shows results with AI responses after all rounds complete', async () => {
-    setupMockFetch();
-    render(<CollaborativeAIMode onBack={vi.fn()} />);
-
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'This is a valid prompt with enough chars' } });
-
-    // Click submit and run all async timers
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Iniciar Colaboração AI/i }));
-    });
-
-    // Run all pending timers and flush promises in a loop until settled
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
-    // After processing, should show the results screen with refined responses
+    await submitAndComplete();
     expect(screen.getByText(/Refined Grok response/i)).toBeInTheDocument();
   });
 
   it('displays final synthesis content after collaboration completes', async () => {
-    setupMockFetch();
-    render(<CollaborativeAIMode onBack={vi.fn()} />);
-
-    const textarea = screen.getByRole('textbox');
-    fireEvent.change(textarea, { target: { value: 'This is a valid prompt with enough chars' } });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /Iniciar Colaboração AI/i }));
-    });
-
-    await act(async () => {
-      await vi.runAllTimersAsync();
-    });
-
+    await submitAndComplete();
     expect(screen.getByText(/Final synthesis here/i)).toBeInTheDocument();
   });
 });

@@ -9,17 +9,6 @@ const mockAnalysisData = {
     groq: { content: 'Groq response', responseTime: 1000 },
     openrouter: { content: 'OpenRouter response', responseTime: 1200 },
   },
-  llamaAnalysis: {
-    content: `**SYNTHESIS RESPONSE:**
-This is the synthesis.
-
-**COMPARATIVE ANALYSIS:**
-1. **Convergences**: Both AIs agree on the main points.
-2. **Divergences**: Some minor differences.
-3. **Points of Attention**: Be careful about X.
-4. **Source Quality**: Both responses are reliable.`,
-    responseTime: 2000,
-  },
 };
 
 const synthesisContent = `**SYNTHESIS RESPONSE:**
@@ -116,10 +105,7 @@ describe('LlamaAnalysisNew', () => {
     });
   });
 
-  it('renders onShowSources button when prop is provided', async () => {
-    // onShowSources is passed as a prop; the component must expose it somehow.
-    // Since the component doesn't currently render a sources button based on prop,
-    // we test that the prop is accepted without error and analysis still loads.
+  it('accepts onShowSources prop without error and renders analysis', async () => {
     setupSuccessfulFetch();
     const onShowSources = vi.fn();
 
@@ -130,7 +116,6 @@ describe('LlamaAnalysisNew', () => {
       />,
     );
 
-    // Component renders without crashing when onShowSources is provided
     await waitFor(() => {
       expect(screen.getByText(/Analysis Complete/i)).toBeInTheDocument();
     });
