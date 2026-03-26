@@ -13,7 +13,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     environmentMatchGlobs: [
-      ['client/src/**/*.{ts,tsx}', 'jsdom'],
+      [path.resolve(root, 'client/src/**/*.{ts,tsx}'), 'jsdom'],
     ],
     setupFiles: ['client/src/test/setup.ts'],
     include: ['**/*.test.{ts,tsx}'],

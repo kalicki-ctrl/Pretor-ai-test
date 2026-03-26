@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { LanguageProvider } from '@/contexts/language-context';
@@ -11,9 +11,12 @@ global.fetch = vi.fn().mockResolvedValue({
   json: () => Promise.resolve({ success: false }),
 } as any);
 
-// Mock clipboard API (jsdom doesn't support it)
-Object.assign(navigator, {
-  clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+// Mock clipboard API (jsdom doesn't support it natively)
+const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+Object.defineProperty(navigator, 'clipboard', {
+  value: { writeText: clipboardWriteText },
+  writable: true,
+  configurable: true,
 });
 
 const mockResponses = {
@@ -68,7 +71,6 @@ describe('IndividualResponses', () => {
   });
 
   it('clicking expand button shows full content', async () => {
-    const user = userEvent.setup();
     await act(async () => {
       renderResponses(mockResponsesLong);
     });
@@ -76,7 +78,7 @@ describe('IndividualResponses', () => {
     // Find and click the expand button
     const showMoreButton = screen.getByRole('button', { name: /show more/i });
     await act(async () => {
-      await user.click(showMoreButton);
+      fireEvent.click(showMoreButton);
     });
 
     // Full content should now be visible
@@ -84,17 +86,16 @@ describe('IndividualResponses', () => {
   });
 
   it('copy button triggers navigator.clipboard.writeText with response content', async () => {
-    const user = userEvent.setup();
     await act(async () => {
       renderResponses();
     });
 
     const copyButtons = screen.getAllByRole('button', { name: /copy/i });
     await act(async () => {
-      await user.click(copyButtons[0]);
+      fireEvent.click(copyButtons[0]);
     });
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Groq response content here');
+    expect(clipboardWriteText).toHaveBeenCalledWith('Groq response content here');
   });
 
   it('shows response time for providers', async () => {
