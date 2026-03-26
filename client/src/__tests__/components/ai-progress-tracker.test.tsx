@@ -5,11 +5,6 @@ import { vi } from 'vitest';
 import { LanguageProvider } from '@/contexts/language-context';
 import { AIProgressTracker } from '@/components/ai-progress-tracker';
 
-// Mock fetch for language detection
-global.fetch = vi.fn().mockResolvedValue({
-  json: () => Promise.resolve({ success: false }),
-} as any);
-
 function Wrapper({ children }: { children: React.ReactNode }) {
   return <LanguageProvider>{children}</LanguageProvider>;
 }
@@ -23,23 +18,24 @@ function renderTracker(props: Partial<React.ComponentProps<typeof AIProgressTrac
   return render(<AIProgressTracker {...defaults} {...props} />, { wrapper: Wrapper });
 }
 
+beforeEach(() => {
+  global.fetch = vi.fn().mockResolvedValue({
+    json: () => Promise.resolve({ success: false }),
+  } as any);
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
 describe('AIProgressTracker', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.clearAllMocks();
-  });
-
-  it('renders when isAnalyzing=true with empty responses', async () => {
+  it('renders progress bar when isAnalyzing=true with empty responses', async () => {
     await act(async () => {
       renderTracker({ isAnalyzing: true, responses: {} });
     });
-    // Component should be visible (not null) when isAnalyzing=true
-    const progressBar = document.querySelector('[role="progressbar"]');
-    expect(progressBar).toBeInTheDocument();
+    expect(document.querySelector('[role="progressbar"]')).toBeInTheDocument();
   });
 
   it('shows AI provider names', async () => {
@@ -50,14 +46,6 @@ describe('AIProgressTracker', () => {
     expect(screen.getByText('Groq')).toBeInTheDocument();
     expect(screen.getByText('Cohere')).toBeInTheDocument();
     expect(screen.getByText('Llama3')).toBeInTheDocument();
-  });
-
-  it('shows progress bar element', async () => {
-    await act(async () => {
-      renderTracker({ isAnalyzing: true, responses: {} });
-    });
-    const progressBar = document.querySelector('[role="progressbar"]');
-    expect(progressBar).toBeInTheDocument();
   });
 
   it('calls onComplete when all AI responses have content', async () => {
@@ -73,7 +61,6 @@ describe('AIProgressTracker', () => {
       renderTracker({ isAnalyzing: true, responses, onComplete });
     });
 
-    // Advance timers to trigger the setTimeout(onComplete, 500)
     await act(async () => {
       vi.advanceTimersByTime(600);
     });
@@ -102,7 +89,6 @@ describe('AIProgressTracker', () => {
       renderTracker({ isAnalyzing: true, responses });
     });
 
-    // Response time is displayed as "X.Xs"
     expect(screen.getByText(/1\.5s/)).toBeInTheDocument();
   });
 });

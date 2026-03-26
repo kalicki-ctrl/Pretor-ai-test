@@ -168,13 +168,14 @@ describe('CollaborativeAIMode', () => {
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'This is a valid prompt with enough chars' } });
 
+    // Click submit and run all async timers
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Iniciar Colaboração AI/i }));
-      // Advance timers past the setTimeout delays (2000ms + 1500ms)
-      vi.advanceTimersByTime(5000);
-      await Promise.resolve();
-      vi.advanceTimersByTime(5000);
-      await Promise.resolve();
+    });
+
+    // Run all pending timers and flush promises in a loop until settled
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
 
     // After processing, should show the results screen with refined responses
@@ -190,10 +191,10 @@ describe('CollaborativeAIMode', () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Iniciar Colaboração AI/i }));
-      vi.advanceTimersByTime(5000);
-      await Promise.resolve();
-      vi.advanceTimersByTime(5000);
-      await Promise.resolve();
+    });
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
 
     expect(screen.getByText(/Final synthesis here/i)).toBeInTheDocument();
