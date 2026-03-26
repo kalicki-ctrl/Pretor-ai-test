@@ -49,7 +49,6 @@ export const promptUnderstandingSchema = z.object({
 
 export const promptAnalysisSchema = z.object({
   prompt: z.string().min(10, "Prompt deve ter pelo menos 10 caracteres"),
-  apiKeys: apiKeysSchema.optional(),
   recommendedAI: z.string().optional(),
   aiWeights: z.record(z.number()).optional(),
 });
