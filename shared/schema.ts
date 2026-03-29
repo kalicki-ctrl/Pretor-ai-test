@@ -44,14 +44,16 @@ export const apiKeysSchema = z.object({
 
 export type ApiKeys = z.infer<typeof apiKeysSchema>;
 
+const AI_PROVIDER = z.enum(['openrouter', 'groq', 'cohere', 'llama3', 'google']);
+
 export const promptUnderstandingSchema = z.object({
-  prompt: z.string().min(10, "Prompt deve ter pelo menos 10 caracteres"),
+  prompt: z.string().min(10, "Prompt deve ter pelo menos 10 caracteres").max(4000),
 });
 
 export const promptAnalysisSchema = z.object({
-  prompt: z.string().min(10, "Prompt deve ter pelo menos 10 caracteres"),
-  recommendedAI: z.string().optional(),
-  aiWeights: z.record(z.number()).optional(),
+  prompt: z.string().min(10, "Prompt deve ter pelo menos 10 caracteres").max(4000),
+  recommendedAI: AI_PROVIDER.optional(),
+  aiWeights: z.record(AI_PROVIDER, z.number().min(0).max(1)).optional(),
 });
 
 export type PromptAnalysis = z.infer<typeof promptAnalysisSchema>;

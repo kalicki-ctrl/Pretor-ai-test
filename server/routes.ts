@@ -18,6 +18,51 @@ const chatSchema = z.object({
   })).max(50).optional(),
 });
 
+// Schemas for collaborative AI endpoints
+const collaborativeInitialSchema = z.object({
+  prompt: z.string().min(10).max(4000),
+});
+
+const collaborativeRefineSchema = z.object({
+  prompt: z.string().min(10).max(4000),
+  initialResponses: z.array(z.object({
+    id: z.string().max(50),
+    name: z.string().max(100),
+    provider: z.string().max(100),
+    initialResponse: z.string().max(8000),
+    refinedResponse: z.string().max(8000),
+    reasoning: z.string().max(2000),
+    confidence: z.null(),
+    color: z.string().max(50),
+    roundHistory: z.array(z.object({
+      roundNumber: z.number().int().min(0).max(10),
+      response: z.string().max(8000),
+      reasoning: z.string().max(2000),
+      timestamp: z.string().max(50),
+    })).max(12).optional(),
+  })).min(1).max(5),
+});
+
+const collaborativeSynthesizeSchema = z.object({
+  prompt: z.string().min(10).max(4000),
+  refinedResponses: z.array(z.object({
+    id: z.string().max(50),
+    name: z.string().max(100),
+    provider: z.string().max(100),
+    initialResponse: z.string().max(8000),
+    refinedResponse: z.string().max(8000),
+    reasoning: z.string().max(2000),
+    confidence: z.null(),
+    color: z.string().max(50),
+    roundHistory: z.array(z.object({
+      roundNumber: z.number().int().min(0).max(10),
+      response: z.string().max(8000),
+      reasoning: z.string().max(2000),
+      timestamp: z.string().max(50),
+    })).max(12).optional(),
+  })).min(1).max(5),
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
 
   // Detect user location endpoint
@@ -168,10 +213,13 @@ EXEMPLOS:
 ❌ ERRADO: Se prompt = "Como fazer café?", NÃO responda com "Primeiro pegue o pó..."
 ✅ CORRETO: "Descreva passo a passo o processo de preparação de café expresso italiano"`;
 
+      // Escape </user_prompt> in user input to prevent delimiter injection
+      const safePrompt = prompt.replace(/<\/user_prompt>/gi, '< /user_prompt>');
+
       // Use XML delimiters for user prompt (prompt injection mitigation)
       const understandingPrompt = `${systemPrompt}
 
-<user_prompt>${prompt}</user_prompt>
+<user_prompt>${safePrompt}</user_prompt>
 
 LEMBRE-SE: Você deve gerar 3 REFORMULAÇÕES do prompt acima, não respostas ao que foi perguntado. As alternativas devem ser versões melhoradas da MESMA PERGUNTA ou SOLICITAÇÃO.`;
 
@@ -296,7 +344,7 @@ LEMBRE-SE: Você deve gerar 3 REFORMULAÇÕES do prompt acima, não respostas ao
 
       // Call AI APIs in parallel
       const aiProviders = [
-        { name: 'openrouter', call: () => aiService.callOpenRouter(originalPrompt, keys.openrouter) },
+        { name: 'openrouter', call: () => aiService.callOpenRouter(originalPrompt) },
         { name: 'groq', call: () => aiService.callGroq(originalPrompt, keys.groq) },
         { name: 'cohere', call: () => aiService.callCohere(originalPrompt, keys.cohere) },
         { name: 'llama3', call: () => aiService.callLlama3(originalPrompt, keys.llama3) },
@@ -429,7 +477,7 @@ ${Object.entries(aiWeights).map(([ai, weight]) =>
 
 **INSTRUÇÕES DE SÍNTESE:**
 - Considere TODAS as respostas das IAs
-- Dê mais peso (${(aiWeights[recommendedAI] * 100).toFixed(0)}%) à resposta da ${recommendedAI.toUpperCase()} por ser mais adequada
+- Dê mais peso (${((aiWeights[recommendedAI] ?? 0) * 100).toFixed(0)}%) à resposta da ${recommendedAI.toUpperCase()} por ser mais adequada
 - Não ignore as outras respostas, use-as para validação e complemento
 - Identifique pontos fortes de cada IA na sua análise comparativa`;
 
@@ -796,14 +844,7 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
   app.post("/api/collaborative-ai/initial", async (req, res) => {
     try {
-      const { prompt } = req.body;
-
-      if (!prompt || prompt.trim().length < 10) {
-        return res.status(400).json({
-          success: false,
-          message: "Prompt deve ter pelo menos 10 caracteres"
-        });
-      }
+      const { prompt } = collaborativeInitialSchema.parse(req.body);
 
       const responses = await collaborativeAI.generateInitialResponses(prompt);
 
@@ -816,25 +857,18 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
     } catch (error) {
       console.error('Erro na Rodada 1:', error);
-      res.status(500).json({
-        success: false,
-        message: error instanceof Error ? error.message : "Erro na geração de hipóteses iniciais"
-      });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, message: error.errors[0]?.message || 'Invalid input' });
+      }
+      res.status(500).json({ success: false, message: "Erro na geração de hipóteses iniciais" });
     }
   });
 
   app.post("/api/collaborative-ai/refine", async (req, res) => {
     try {
-      const { prompt, initialResponses } = req.body;
+      const { prompt, initialResponses } = collaborativeRefineSchema.parse(req.body);
 
-      if (!prompt || !initialResponses || !Array.isArray(initialResponses)) {
-        return res.status(400).json({
-          success: false,
-          message: "Prompt e respostas iniciais são obrigatórios"
-        });
-      }
-
-      const refinedResponses = await collaborativeAI.refineResponses(prompt, initialResponses);
+      const refinedResponses = await collaborativeAI.refineResponses(prompt, initialResponses as any);
 
       res.json({
         success: true,
@@ -845,25 +879,18 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
     } catch (error) {
       console.error('Erro na Rodada 2:', error);
-      res.status(500).json({
-        success: false,
-        message: error instanceof Error ? error.message : "Erro no refinamento cruzado"
-      });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, message: error.errors[0]?.message || 'Invalid input' });
+      }
+      res.status(500).json({ success: false, message: "Erro no refinamento cruzado" });
     }
   });
 
   app.post("/api/collaborative-ai/synthesize", async (req, res) => {
     try {
-      const { prompt, refinedResponses } = req.body;
+      const { prompt, refinedResponses } = collaborativeSynthesizeSchema.parse(req.body);
 
-      if (!prompt || !refinedResponses || !Array.isArray(refinedResponses)) {
-        return res.status(400).json({
-          success: false,
-          message: "Prompt e respostas refinadas são obrigatórios"
-        });
-      }
-
-      const synthesis = await collaborativeAI.generateFinalSynthesis(prompt, refinedResponses);
+      const synthesis = await collaborativeAI.generateFinalSynthesis(prompt, refinedResponses as any);
 
       res.json({
         success: true,
@@ -873,10 +900,10 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
     } catch (error) {
       console.error('Erro na Síntese Final:', error);
-      res.status(500).json({
-        success: false,
-        message: error instanceof Error ? error.message : "Erro na síntese colaborativa"
-      });
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, message: error.errors[0]?.message || 'Invalid input' });
+      }
+      res.status(500).json({ success: false, message: "Erro na síntese colaborativa" });
     }
   });
 

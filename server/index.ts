@@ -9,6 +9,10 @@ import { cacheMiddleware } from "./middleware/compression";
 
 const app = express();
 
+// Trust one proxy layer (load balancer / Cloudflare) so req.ip reflects the real client IP
+// rather than the proxy's IP, which is required for rate limiting to work correctly.
+app.set('trust proxy', 1);
+
 // Security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
 app.use(helmet({
   contentSecurityPolicy: {
