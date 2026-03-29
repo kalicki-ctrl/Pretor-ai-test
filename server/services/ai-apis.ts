@@ -172,7 +172,7 @@ export class AIService {
   async callOpenRouter(prompt: string, model?: string, apiKey?: string): Promise<AIResponse> {
     const startTime = Date.now();
     const key = apiKey || process.env.OPENROUTER_API_KEY;
-    const selectedModel = model || 'mistralai/mistral-7b-instruct:free';
+    const selectedModel = model || 'stepfun/step-3.5-flash:free';
 
     if (!key) {
       const r = { content: '', responseTime: Date.now() - startTime, error: 'OpenRouter API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
@@ -312,7 +312,7 @@ export class AIService {
     try {
       // Use x-goog-api-key header instead of query parameter to avoid key exposure in logs
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
         {
           method: 'POST',
           headers: {
@@ -384,7 +384,7 @@ export class AIService {
 
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
         {
           method: 'POST',
           headers: {
@@ -541,7 +541,7 @@ Seja objetivo, preciso e mantenha um tom profissional.`;
     try {
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
         {
           method: 'POST',
           headers: {

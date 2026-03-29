@@ -151,7 +151,7 @@ describe('callOpenRouter', () => {
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
   });
 
-  it('uses default model mistralai/mistral-7b-instruct:free', async () => {
+  it('uses default model stepfun/step-3.5-flash:free', async () => {
     const fetchMock = mockFetchResponse({
       choices: [{ message: { content: 'ok' } }],
       usage: { total_tokens: 3 },
@@ -163,7 +163,7 @@ describe('callOpenRouter', () => {
 
     const [, options] = fetchMock.mock.calls[0];
     const body = JSON.parse(options.body as string);
-    expect(body.model).toBe('mistralai/mistral-7b-instruct:free');
+    expect(body.model).toBe('stepfun/step-3.5-flash:free');
   });
 
   it('returns content from choices[0].message.content', async () => {
