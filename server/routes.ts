@@ -627,18 +627,30 @@ ${Object.entries(aiWeights).map(([ai, weight]) =>
   });
 
   // Advanced image analysis - Extract with Gemini then analyze with all AIs
+  const imageAdvancedSchema = z.object({
+    prompt: z.string().min(5).max(4000),
+    image: z.string()
+      .min(1)
+      .max(2_800_000) // ~2MB base64
+      .refine(v => /^data:image\/(jpeg|png|gif|webp);base64,/.test(v), {
+        message: 'imageData must be a base64-encoded JPEG, PNG, GIF, or WebP',
+      }),
+    selectedAI: z.string().max(100).optional(),
+    aiWeights: z.record(z.number().min(0).max(1)).optional(),
+  });
+
   app.post("/api/analyze-image-advanced", async (req, res) => {
     const startTime = Date.now();
 
     try {
-      const { prompt, image, selectedAI, aiWeights } = req.body;
-
-      if (!prompt || !image) {
+      const bodyResult = imageAdvancedSchema.safeParse(req.body);
+      if (!bodyResult.success) {
         return res.status(400).json({
           success: false,
-          message: "Prompt e imagem são obrigatórios"
+          message: "Dados inválidos: " + bodyResult.error.errors.map(e => e.message).join(', ')
         });
       }
+      const { prompt, image, selectedAI, aiWeights } = bodyResult.data;
 
       const apiKeys = {
         openrouter: process.env.OPENROUTER_API_KEY,

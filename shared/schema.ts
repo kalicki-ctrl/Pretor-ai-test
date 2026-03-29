@@ -39,6 +39,7 @@ export const apiKeysSchema = z.object({
   openrouter: z.string().optional(),
   groq: z.string().optional(),
   cohere: z.string().optional(),
+  google: z.string().optional(),
 });
 
 export type ApiKeys = z.infer<typeof apiKeysSchema>;

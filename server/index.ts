@@ -69,8 +69,9 @@ app.use(cacheMiddleware);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
-// Serve static files from attached_assets directory
-app.use('/attached_assets', express.static('attached_assets'));
+// Serve static files from attached_assets directory (absolute path prevents working-dir confusion)
+import path from "path";
+app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
 
 // Request logging — sanitized: no response bodies, no sensitive data
 app.use((req, res, next) => {
