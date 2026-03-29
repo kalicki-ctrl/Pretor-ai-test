@@ -777,7 +777,7 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
       if (apiKeys.openrouter) {
         promises.push(
-          aiService.callOpenRouter(enhancedPrompt, apiKeys.openrouter)
+          aiService.callOpenRouter(enhancedPrompt)
             .then(response => { responses.openrouter = response; })
             .catch(error => {
               responses.openrouter = { content: '', responseTime: 0, error: error.message };
