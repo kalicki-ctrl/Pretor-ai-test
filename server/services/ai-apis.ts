@@ -43,7 +43,14 @@ export class AIService {
     const text = content.length > 50000 ? content.slice(0, 50000) : content;
 
     const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/g;
-    const urls = text.match(urlRegex) || [];
+    const urls = (text.match(urlRegex) || []).map(url => {
+      // Strip unbalanced trailing closing parens (e.g. from markdown `[title](url)` context)
+      let result = url;
+      while (result.endsWith(')') && (result.match(/\(/g) || []).length < (result.match(/\)/g) || []).length) {
+        result = result.slice(0, -1);
+      }
+      return result;
+    });
 
     const markdownLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
     const markdownMatches = [];
@@ -52,28 +59,30 @@ export class AIService {
       markdownMatches.push(match);
     }
 
-    const citationRegex = /(?:Source:|Reference:|Analyze:|Consult:)\s*([^\n.]+)/gi;
+    const citationRegex = /(?:Source:|Reference:|Analyze:|Consult:)\s*([^\n]+)/gi;
     const citations = [];
     let citationMatch;
     while ((citationMatch = citationRegex.exec(text)) !== null) {
       citations.push(citationMatch);
     }
 
-    urls.forEach(url => {
+    // Markdown links first — title takes priority over bare domain name
+    markdownMatches.forEach(match => {
+      const [, title, url] = match;
       if (!sources.some(s => s.url === url)) {
         sources.push({
-          title: this.extractDomainFromUrl(url),
+          title: title.trim(),
           url: url,
           type: 'website'
         });
       }
     });
 
-    markdownMatches.forEach(match => {
-      const [, title, url] = match;
+    // Bare URLs — skip any already covered by a markdown link
+    urls.forEach(url => {
       if (!sources.some(s => s.url === url)) {
         sources.push({
-          title: title.trim(),
+          title: this.extractDomainFromUrl(url),
           url: url,
           type: 'website'
         });

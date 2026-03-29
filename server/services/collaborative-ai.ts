@@ -44,6 +44,21 @@ export class CollaborativeAIService {
     this.aiService = new AIService();
   }
 
+  private callAgent(agent: AIAgent, prompt: string): ReturnType<AIService['callGroq']> {
+    switch (agent.serviceName) {
+      case 'openrouter':
+        return agent.id === 'grok'
+          ? this.aiService.callOpenRouter(prompt, 'x-ai/grok-beta')
+          : this.aiService.callOpenRouter(prompt, 'meta-llama/llama-3.1-8b-instruct:free');
+      case 'groq':
+        return this.aiService.callGroq(prompt);
+      case 'cohere':
+        return this.aiService.callCohere(prompt);
+      default:
+        throw new Error(`Serviço desconhecido: ${agent.serviceName}`);
+    }
+  }
+
   // FIFO eviction when cache exceeds max size
   private setCacheEntry(key: string, value: any): void {
     if (this.cache.size >= CollaborativeAIService.MAX_CACHE_ENTRIES) {
@@ -66,23 +81,7 @@ export class CollaborativeAIService {
         // Use XML delimiters for user prompt (prompt injection mitigation)
         const enhancedPrompt = `Como ${agent.name}, analise: <user_prompt>${prompt}</user_prompt>. Resposta concisa e objetiva.`;
 
-        let aiResponse;
-
-        switch (agent.serviceName) {
-          case 'openrouter':
-            aiResponse = agent.id === 'grok'
-              ? await this.aiService.callOpenRouter(enhancedPrompt, 'x-ai/grok-beta')
-              : await this.aiService.callOpenRouter(enhancedPrompt, 'meta-llama/llama-3.1-8b-instruct:free');
-            break;
-          case 'groq':
-            aiResponse = await this.aiService.callGroq(enhancedPrompt);
-            break;
-          case 'cohere':
-            aiResponse = await this.aiService.callCohere(enhancedPrompt);
-            break;
-          default:
-            throw new Error(`Serviço desconhecido: ${agent.serviceName}`);
-        }
+        const aiResponse = await this.callAgent(agent, enhancedPrompt);
 
         const response: CollaborativeResponse = {
           id: agent.id,
@@ -159,25 +158,10 @@ Refine sua resposta considerando as outras perspectivas. Seja conciso.
 Resposta Refinada: [sua resposta melhorada]
 Raciocínio: [por que mudou/manteve]`;
 
-          let aiResponse;
           const agent = this.aiAgents.find(a => a.id === currentResponse.id);
           if (!agent) throw new Error(`Agent não encontrado: ${currentResponse.id}`);
 
-          switch (agent.serviceName) {
-            case 'openrouter':
-              aiResponse = agent.id === 'grok'
-                ? await this.aiService.callOpenRouter(refinementPrompt, 'x-ai/grok-beta')
-                : await this.aiService.callOpenRouter(refinementPrompt, 'meta-llama/llama-3.1-8b-instruct:free');
-              break;
-            case 'groq':
-              aiResponse = await this.aiService.callGroq(refinementPrompt);
-              break;
-            case 'cohere':
-              aiResponse = await this.aiService.callCohere(refinementPrompt);
-              break;
-            default:
-              throw new Error(`Serviço desconhecido: ${agent.serviceName}`);
-          }
+          const aiResponse = await this.callAgent(agent, refinementPrompt);
 
           const fullResponse = aiResponse.content;
           const responseMatch = fullResponse.match(/Resposta Refinada:\s*(.*?)(?=\n.*?Raciocínio:|$)/);
