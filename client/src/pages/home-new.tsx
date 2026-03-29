@@ -56,7 +56,11 @@ export default function Home() {
   const [progressResponses, setProgressResponses] = useState<Record<string, any>>({});
   const [understanding, setUnderstanding] = useState<any>(null);
   const [showSources, setShowSources] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState<string>("");
+  const [selectedPrompt, setSelectedPrompt] = useState<string | number | undefined>(undefined);
+  const getSelectedPromptText = (): string => {
+    if (typeof selectedPrompt === 'number') return understanding?.alternatives?.[selectedPrompt] ?? prompt;
+    return selectedPrompt ?? prompt;
+  };
   const [showSourcesModal, setShowSourcesModal] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'ai', content: string, aiProvider?: string}>>([]);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -764,7 +768,7 @@ export default function Home() {
                 </div>
 
                 {/* Alternative Prompts */}
-                {understanding.alternatives && understanding.alternatives.map((alternative, index) => (
+                {understanding.alternatives && understanding.alternatives.map((alternative: string, index: number) => (
                   <div 
                     key={index}
                     className={`group relative cursor-pointer premium-card glass-effect ${selectedPrompt === index ? 'ring-2 ring-green-500 ring-opacity-50' : ''}`}
@@ -809,7 +813,7 @@ export default function Home() {
               {/* Action Button */}
               <div className="flex justify-center pt-8">
                 <Button
-                  onClick={() => handlePromptSelection(selectedPrompt)}
+                  onClick={() => handlePromptSelection(getSelectedPromptText())}
                   className="px-8 py-4 text-lg font-medium bg-gradient-to-r from-primary to-green-500 hover:from-primary/90 hover:to-green-500/90 text-black rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                   style={{ animation: 'fadeInUp 0.8s ease-out 0.8s both' }}
                 >
@@ -884,7 +888,7 @@ export default function Home() {
 
                     <div className="bg-muted/20 backdrop-blur-sm rounded-2xl p-6 border border-border/30">
                       <p className="text-foreground leading-relaxed font-light text-base">
-                        {selectedPrompt}
+                        {getSelectedPromptText()}
                       </p>
                     </div>
                   </div>
@@ -900,7 +904,7 @@ export default function Home() {
                     <PromptConfirmation
                       understanding={understanding.understanding}
                       alternatives={understanding.alternatives}
-                      originalPrompt={selectedPrompt}
+                      originalPrompt={getSelectedPromptText()}
                       responseTime={understanding.responseTime}
                       recommendedAI={understanding.recommendedAI}
                       aiWeights={understanding.aiWeights}
