@@ -23,18 +23,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [detectedLocation, setDetectedLocation] = useState<any>(null);
   const [isDetecting, setIsDetecting] = useState<boolean>(true);
 
+  const VALID_LANGUAGES = new Set(['en-US', 'pt-BR', 'es-ES', 'fr-FR', 'zh-CN', 'ja-JP', 'de-DE', 'it-IT', 'ru-RU', 'ko-KR', 'nl-NL']);
+
   useEffect(() => {
     // Verificar se há uma preferência salva no localStorage primeiro
     const savedLanguage = localStorage.getItem('preferredLanguage');
-    
+
     // Se não houver preferência salva, detectar automaticamente
-    if (!savedLanguage) {
+    if (!savedLanguage || !VALID_LANGUAGES.has(savedLanguage)) {
       detectLocationAndSetLanguage();
     } else {
       // Usar a preferência salva mas ainda detectar localização para referência
       setLanguage(savedLanguage);
       setIsDetecting(false);
-      
+
       // Detectar localização em background para referência
       detectLocationAndSetLanguage(false);
     }
@@ -52,7 +54,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         // Só definir o idioma automaticamente se não houver preferência salva
         if (shouldSetLanguage) {
           setLanguage(locationData.location.language);
-          console.log(`🌍 Localização detectada: ${locationData.location.country} (${locationData.location.countryCode}) - Idioma: ${locationData.location.language}`);
         }
       }
     } catch (error) {
@@ -74,30 +75,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           setLanguage('en-US');
         }
         
-        console.log(`🌐 Usando detecção do navegador: ${browserLang} -> idioma definido`);
       }
     } finally {
       setIsDetecting(false);
     }
   };
 
+  const ALLOWED_LANG_CODES = new Set(['en', 'pt', 'es', 'fr', 'de', 'it', 'zh', 'ja', 'ru', 'ko', 'nl']);
+
   const setLanguage = (newLanguage: string) => {
-    console.log(`🔄 Alterando idioma para: ${newLanguage}`);
-    
-    // Forçar atualização das traduções
     const newTranslations = getTranslation(newLanguage);
     setTranslations(newTranslations);
-    
-    // Atualizar o estado do idioma
     setLanguageState(newLanguage);
-    
-    // Salvar preferência no localStorage
     localStorage.setItem('preferredLanguage', newLanguage);
-    
-    // Atualizar meta tags da página
-    document.documentElement.lang = newLanguage.split('-')[0];
-    
-    console.log(`✅ Idioma definido como: ${newLanguage}`);
+
+    const langCode = newLanguage.split('-')[0].toLowerCase();
+    if (ALLOWED_LANG_CODES.has(langCode)) {
+      document.documentElement.lang = langCode;
+    }
   };
 
   useEffect(() => {

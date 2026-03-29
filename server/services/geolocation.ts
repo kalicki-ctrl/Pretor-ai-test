@@ -158,40 +158,32 @@ export class GeolocationService {
         countryCode = cfCountry;
       }
 
-      // 2. Check X-Country header (only trusted behind known proxy)
-      else {
-        const xCountry = (req.headers['x-country'] as string)?.toUpperCase();
-        if (xCountry && this.isValidCountryCode(xCountry)) {
-          countryCode = xCountry;
-        }
+      // 2. Check Accept-Language header
+      else if (req.headers['accept-language']) {
+        const acceptLanguage = req.headers['accept-language'];
 
-        // 3. Check Accept-Language header
-        else if (req.headers['accept-language']) {
-          const acceptLanguage = req.headers['accept-language'];
-
-          if (acceptLanguage.includes('pt-BR') || acceptLanguage.includes('pt')) {
-            countryCode = 'BR';
-          } else if (acceptLanguage.includes('es')) {
-            countryCode = 'ES';
-          } else if (acceptLanguage.includes('fr')) {
-            countryCode = 'FR';
-          } else if (acceptLanguage.includes('de')) {
-            countryCode = 'DE';
-          } else if (acceptLanguage.includes('it')) {
-            countryCode = 'IT';
-          } else if (acceptLanguage.includes('ru')) {
-            countryCode = 'RU';
-          } else if (acceptLanguage.includes('zh')) {
-            countryCode = 'CN';
-          } else if (acceptLanguage.includes('ja')) {
-            countryCode = 'JP';
-          } else if (acceptLanguage.includes('ko')) {
-            countryCode = 'KR';
-          } else if (acceptLanguage.includes('hi')) {
-            countryCode = 'IN';
-          } else if (acceptLanguage.includes('nl')) {
-            countryCode = 'NL';
-          }
+        if (acceptLanguage.includes('pt-BR') || acceptLanguage.includes('pt')) {
+          countryCode = 'BR';
+        } else if (acceptLanguage.includes('es')) {
+          countryCode = 'ES';
+        } else if (acceptLanguage.includes('fr')) {
+          countryCode = 'FR';
+        } else if (acceptLanguage.includes('de')) {
+          countryCode = 'DE';
+        } else if (acceptLanguage.includes('it')) {
+          countryCode = 'IT';
+        } else if (acceptLanguage.includes('ru')) {
+          countryCode = 'RU';
+        } else if (acceptLanguage.includes('zh')) {
+          countryCode = 'CN';
+        } else if (acceptLanguage.includes('ja')) {
+          countryCode = 'JP';
+        } else if (acceptLanguage.includes('ko')) {
+          countryCode = 'KR';
+        } else if (acceptLanguage.includes('hi')) {
+          countryCode = 'IN';
+        } else if (acceptLanguage.includes('nl')) {
+          countryCode = 'NL';
         }
       }
 
