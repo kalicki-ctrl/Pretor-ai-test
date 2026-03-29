@@ -254,17 +254,15 @@ export class AIService {
 
     try {
       const response = await this.makeRequest(
-        'https://api.cohere.ai/v1/generate',
+        'https://api.cohere.com/v2/chat',
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${key}`,
           },
           body: JSON.stringify({
-            model: 'command',
-            prompt: prompt,
-            max_tokens: 500,
-            temperature: 0.7,
+            model: 'command-r',
+            messages: [{ role: 'user', content: prompt }],
           }),
         }
       );
@@ -274,12 +272,12 @@ export class AIService {
       }
 
       const data = await response.json();
-      const content = data.generations?.[0]?.text || '';
+      const content = data.message?.content?.[0]?.text || '';
 
       return {
         content,
         responseTime: Date.now() - startTime,
-        tokens: data.meta?.tokens?.output_tokens,
+        tokens: data.usage?.tokens?.output_tokens,
         sources: this.extractSources(content),
       };
     } catch (error) {
@@ -306,7 +304,7 @@ export class AIService {
     try {
       // Use x-goog-api-key header instead of query parameter to avoid key exposure in logs
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
         {
           method: 'POST',
           headers: {
@@ -543,7 +541,7 @@ Seja objetivo, preciso e mantenha um tom profissional.`;
     try {
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
         {
           method: 'POST',
           headers: {

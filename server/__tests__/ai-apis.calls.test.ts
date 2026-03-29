@@ -203,9 +203,9 @@ describe('callCohere', () => {
     expect(result.error).toBe('Cohere API key not configured');
   });
 
-  it('sends POST to https://api.cohere.ai/v1/generate', async () => {
+  it('sends POST to https://api.cohere.com/v2/chat', async () => {
     const fetchMock = mockFetchResponse({
-      generations: [{ text: 'cohere response' }],
+      message: { content: [{ text: 'cohere response' }] },
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -213,12 +213,12 @@ describe('callCohere', () => {
     await service.callCohere('hello', 'cohere-key');
 
     const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://api.cohere.ai/v1/generate');
+    expect(url).toBe('https://api.cohere.com/v2/chat');
   });
 
-  it('returns content from data.generations[0].text', async () => {
+  it('returns content from data.message.content[0].text', async () => {
     const fetchMock = mockFetchResponse({
-      generations: [{ text: 'cohere answer' }],
+      message: { content: [{ text: 'cohere answer' }] },
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -231,7 +231,7 @@ describe('callCohere', () => {
 
   it('sends Authorization Bearer header', async () => {
     const fetchMock = mockFetchResponse({
-      generations: [{ text: 'ok' }],
+      message: { content: [{ text: 'ok' }] },
     });
     vi.stubGlobal('fetch', fetchMock);
 
