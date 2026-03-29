@@ -85,8 +85,9 @@ describe('PromptConfirmation', () => {
 
   test('recommended AI (groq) is visually highlighted with a badge or indicator', () => {
     render(<PromptConfirmation {...defaultProps} />);
-    // The recommendation section mentions the recommended AI
-    expect(screen.getByText(/recomendação pretor ai/i)).toBeInTheDocument();
+    // The recommendation section mentions the recommended AI (multiple elements may match /groq/i)
     expect(screen.getAllByText(/groq/i).length).toBeGreaterThan(0);
+    // The recommendation section specifically mentions the recommended AI
+    expect(screen.getByText(/recomendação pretor ai/i)).toBeInTheDocument();
   });
 });

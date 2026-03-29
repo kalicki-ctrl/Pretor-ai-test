@@ -33,13 +33,13 @@ describe('throwIfResNotOk', () => {
     await expect(throwIfResNotOk(res)).rejects.toThrow();
   });
 
-  it('error message includes the status code', async () => {
+  it('error message uses statusText when body is not JSON', async () => {
     const res = makeMockResponse(false, 404, 'Not Found', 'Not Found');
-    await expect(throwIfResNotOk(res)).rejects.toThrow('404');
+    await expect(throwIfResNotOk(res)).rejects.toThrow('Not Found');
   });
 
-  it('error message includes the response body text', async () => {
-    const res = makeMockResponse(false, 422, 'Unprocessable Entity', 'Validation failed');
+  it('error message uses JSON message field when body is valid JSON', async () => {
+    const res = makeMockResponse(false, 422, 'Unprocessable Entity', '{"message":"Validation failed"}');
     await expect(throwIfResNotOk(res)).rejects.toThrow('Validation failed');
   });
 

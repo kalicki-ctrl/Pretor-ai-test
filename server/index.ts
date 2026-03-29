@@ -9,6 +9,10 @@ import { cacheMiddleware } from "./middleware/compression";
 
 const app = express();
 
+// Trust one proxy layer (load balancer / Cloudflare) so req.ip reflects the real client IP
+// rather than the proxy's IP, which is required for rate limiting to work correctly.
+app.set('trust proxy', 1);
+
 // Security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS, etc.)
 app.use(helmet({
   contentSecurityPolicy: {
@@ -81,8 +85,9 @@ app.use(cacheMiddleware);
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false, limit: '2mb' }));
 
-// Serve static files from attached_assets directory
-app.use('/attached_assets', express.static('attached_assets'));
+// Serve static files from attached_assets directory (absolute path prevents working-dir confusion)
+import path from "path";
+app.use('/attached_assets', express.static(path.resolve(import.meta.dirname, '..', 'attached_assets')));
 
 // Request logging — sanitized: no response bodies, no sensitive data
 app.use((req, res, next) => {

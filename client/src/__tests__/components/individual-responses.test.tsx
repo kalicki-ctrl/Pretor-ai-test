@@ -54,7 +54,8 @@ describe('IndividualResponses', () => {
     await act(async () => {
       renderResponses();
     });
-    expect(screen.getByText(/API key not configured/)).toBeInTheDocument();
+    // Error state shows a generic error indicator (raw provider errors are not displayed)
+    expect(screen.getAllByText(/erro/i).length).toBeGreaterThan(0);
   });
 
   it('response content is initially truncated (collapsed state)', async () => {

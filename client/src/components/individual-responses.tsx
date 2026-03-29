@@ -82,7 +82,7 @@ export function IndividualResponses({ responses }: IndividualResponsesProps) {
             {response.error ? (
               <div className="text-center text-muted-foreground py-8">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                <p>{translations.errorOccurred}: {response.error}</p>
+                <p>{translations.errorOccurred}</p>
               </div>
             ) : (
               <>

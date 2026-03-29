@@ -56,7 +56,7 @@ describe('promptAnalysisSchema', () => {
   it('accepts prompt with recommendedAI', () => {
     const result = promptAnalysisSchema.safeParse({
       prompt: 'long enough prompt here',
-      recommendedAI: 'gemini',
+      recommendedAI: 'google',
     });
     expect(result.success).toBe(true);
   });
@@ -64,7 +64,7 @@ describe('promptAnalysisSchema', () => {
   it('accepts prompt with aiWeights', () => {
     const result = promptAnalysisSchema.safeParse({
       prompt: 'long enough prompt here',
-      aiWeights: { gemini: 0.8, groq: 0.2 },
+      aiWeights: { google: 0.8, groq: 0.2 },
     });
     expect(result.success).toBe(true);
   });
@@ -72,8 +72,8 @@ describe('promptAnalysisSchema', () => {
   it('accepts prompt with all optional fields', () => {
     const result = promptAnalysisSchema.safeParse({
       prompt: 'long enough prompt here',
-      recommendedAI: 'gemini',
-      aiWeights: { gemini: 0.8, groq: 0.2 },
+      recommendedAI: 'google',
+      aiWeights: { google: 0.8, groq: 0.2 },
     });
     expect(result.success).toBe(true);
   });

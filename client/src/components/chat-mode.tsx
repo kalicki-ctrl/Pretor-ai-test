@@ -43,20 +43,26 @@ export function ChatMode({ onBack }: ChatModeProps) {
   const [lastUserMessageIndex, setLastUserMessageIndex] = useState<number | null>(null);
   const [selectedAIResponse, setSelectedAIResponse] = useState<string | null>(null);
 
+  const MAX_CONTEXT_CHARS = 3000;
+
   const buildConversationContext = (): string => {
     if (messages.length === 0) return '';
-    
-    const context = messages
+
+    const lines = messages
       .filter(msg => msg.role === 'user' || (msg.role === 'ai' && msg.content))
-      .map(msg => {
-        if (msg.role === 'user') {
-          return `Usuário: ${msg.content}`;
-        } else {
-          return `Assistente (${msg.aiProvider}): ${msg.content}`;
-        }
-      })
-      .join('\n\n');
-    
+      .map(msg =>
+        msg.role === 'user'
+          ? `Usuário: ${msg.content}`
+          : `Assistente (${msg.aiProvider}): ${msg.content}`
+      );
+
+    // Drop oldest messages first to stay within the character budget
+    let context = lines.join('\n\n');
+    while (context.length > MAX_CONTEXT_CHARS && lines.length > 1) {
+      lines.shift();
+      context = lines.join('\n\n');
+    }
+
     return context ? `Contexto da conversa anterior:\n${context}\n\nNova pergunta: ` : '';
   };
 
