@@ -1,4 +1,13 @@
 import { useState } from "react";
+
+function isSafeUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -233,7 +242,7 @@ export function SourcesModal({ isOpen, onClose, responses }: SourcesModalProps) 
                                   </p>
                                 )}
 
-                                {source.url !== '#citation' && (
+                                {source.url !== '#citation' && isSafeUrl(source.url) && (
                                   <a
                                     href={source.url}
                                     target="_blank"

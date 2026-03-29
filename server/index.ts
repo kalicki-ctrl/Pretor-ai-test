@@ -23,9 +23,21 @@ app.use(helmet({
   },
 }));
 
-// CORS
+// CORS — explicitly allow listed origins only; wildcard + credentials is forbidden by browsers
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5000")
+  .split(",")
+  .map(o => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || true,
+  origin: (origin, callback) => {
+    // Same-origin / non-browser requests have no Origin header
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
   credentials: true,
 }));
 

@@ -65,6 +65,19 @@ export function LlamaAnalysisNew({ analysisData, onShowSources }: LlamaAnalysisN
     }
   }, [analysisData]);
 
+  const renderSafeMarkdown = (text: string): React.ReactNode[] =>
+    text.split('\n').flatMap((line, lineIdx) => {
+      const nodes: React.ReactNode[] = lineIdx > 0 ? [<br key={`br-${lineIdx}`} />] : [];
+      line.split(/(\*\*[^*]+\*\*)/).forEach((part, partIdx) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          nodes.push(<strong key={`${lineIdx}-${partIdx}`}>{part.slice(2, -2)}</strong>);
+        } else if (part) {
+          nodes.push(part);
+        }
+      });
+      return nodes;
+    });
+
   const formatAnalysisContent = (content: string) => {
     const sections = content.split(/(?=(?:1\.\s*\*\*Convergences|2\.\s*\*\*Divergences|3\.\s*\*\*Points of Attention|4\.\s*\*\*Sources))/);
     
@@ -127,11 +140,7 @@ export function LlamaAnalysisNew({ analysisData, onShowSources }: LlamaAnalysisN
               </CardHeader>
               <CardContent>
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <div dangerouslySetInnerHTML={{ 
-                    __html: content
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\n/g, '<br/>')
-                  }} />
+                  <div>{renderSafeMarkdown(content)}</div>
                 </div>
               </CardContent>
             </Card>
@@ -144,11 +153,7 @@ export function LlamaAnalysisNew({ analysisData, onShowSources }: LlamaAnalysisN
         return (
           <div key={index} className="mb-6">
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <div dangerouslySetInnerHTML={{ 
-                __html: section
-                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                  .replace(/\n/g, '<br/>')
-              }} />
+              <div>{renderSafeMarkdown(section)}</div>
             </div>
           </div>
         );

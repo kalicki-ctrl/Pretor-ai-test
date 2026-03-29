@@ -9,6 +9,33 @@ import { GeolocationService } from "./services/geolocation";
 import { getCache, setCache, generateCacheKey } from "./services/cache";
 import { createHash } from "crypto";
 
+// Schema for AI-returned understanding JSON — prevents prototype pollution and field injection
+const aiUnderstandingSchema = z.object({
+  understanding: z.string().max(4000).optional(),
+  alternatives: z.array(z.string().max(1000)).max(10).optional(),
+  recommendedAI: z.string().max(100).optional(),
+  aiWeights: z.record(z.number().min(0).max(1)).optional(),
+  explanation: z.string().max(4000).optional(),
+});
+
+// Schema for collaborative AI response objects passed between rounds
+const collaborativeResponseSchema = z.object({
+  id: z.string().max(50),
+  name: z.string().max(100),
+  provider: z.string().max(100),
+  initialResponse: z.string().max(8000),
+  refinedResponse: z.string().max(8000),
+  reasoning: z.string().max(2000),
+  confidence: z.null(),
+  color: z.string().max(50),
+  roundHistory: z.array(z.object({
+    roundNumber: z.number().int().min(0).max(10),
+    response: z.string().max(8000),
+    reasoning: z.string().max(2000),
+    timestamp: z.string().max(50),
+  })).max(12).optional(),
+});
+
 // Zod schema for chat endpoint validation
 const chatSchema = z.object({
   message: z.string().min(1).max(4000),
@@ -186,7 +213,8 @@ LEMBRE-SE: Você deve gerar 3 REFORMULAÇÕES do prompt acima, não respostas ao
       }
 
       try {
-        const parsedContent = JSON.parse(response.content);
+        const rawParsed = JSON.parse(response.content);
+        const parsedContent = aiUnderstandingSchema.parse(rawParsed);
 
         const understandingResult = {
           success: true,
@@ -813,16 +841,20 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
   app.post("/api/collaborative-ai/refine", async (req, res) => {
     try {
-      const { prompt, initialResponses } = req.body;
+      const refineValidation = z.object({
+        prompt: z.string().min(10).max(4000),
+        initialResponses: z.array(collaborativeResponseSchema).min(1).max(5),
+      }).safeParse(req.body);
 
-      if (!prompt || !initialResponses || !Array.isArray(initialResponses)) {
+      if (!refineValidation.success) {
         return res.status(400).json({
           success: false,
           message: "Prompt e respostas iniciais são obrigatórios"
         });
       }
 
-      const refinedResponses = await collaborativeAI.refineResponses(prompt, initialResponses);
+      const { prompt, initialResponses } = refineValidation.data;
+      const refinedResponses = await collaborativeAI.refineResponses(prompt, initialResponses as any);
 
       res.json({
         success: true,
@@ -842,16 +874,20 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
 
   app.post("/api/collaborative-ai/synthesize", async (req, res) => {
     try {
-      const { prompt, refinedResponses } = req.body;
+      const synthesizeValidation = z.object({
+        prompt: z.string().min(10).max(4000),
+        refinedResponses: z.array(collaborativeResponseSchema).min(1).max(5),
+      }).safeParse(req.body);
 
-      if (!prompt || !refinedResponses || !Array.isArray(refinedResponses)) {
+      if (!synthesizeValidation.success) {
         return res.status(400).json({
           success: false,
           message: "Prompt e respostas refinadas são obrigatórios"
         });
       }
 
-      const synthesis = await collaborativeAI.generateFinalSynthesis(prompt, refinedResponses);
+      const { prompt, refinedResponses } = synthesizeValidation.data;
+      const synthesis = await collaborativeAI.generateFinalSynthesis(prompt, refinedResponses as any);
 
       res.json({
         success: true,
