@@ -55,6 +55,21 @@ export class CollaborativeAIService {
     this.aiService = new AIService();
   }
 
+  private callAgent(agent: AIAgent, prompt: string): ReturnType<AIService['callGroq']> {
+    switch (agent.serviceName) {
+      case 'openrouter':
+        return agent.id === 'grok'
+          ? this.aiService.callOpenRouter(prompt, 'x-ai/grok-beta')
+          : this.aiService.callOpenRouter(prompt, 'meta-llama/llama-3.1-8b-instruct:free');
+      case 'groq':
+        return this.aiService.callGroq(prompt);
+      case 'cohere':
+        return this.aiService.callCohere(prompt);
+      default:
+        throw new Error(`Serviço desconhecido: ${agent.serviceName}`);
+    }
+  }
+
   // FIFO eviction when cache exceeds max size; entries expire after TTL
   private setCacheEntry(key: string, value: any): void {
     if (this.cache.size >= CollaborativeAIService.MAX_CACHE_ENTRIES) {
