@@ -964,7 +964,7 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
         run('openrouter', () => aiService.callOpenRouter(TEST_PROMPT), 'stepfun/step-3.5-flash:free'),
         run('groq', () => aiService.callGroq(TEST_PROMPT), 'llama-3.1-8b-instant'),
         run('cohere', () => aiService.callCohere(TEST_PROMPT), 'command-r-08-2024'),
-        run('gemini', () => aiService.callGoogle(TEST_PROMPT), 'gemini-2.5-flash-lite'),
+        run('gemini', () => aiService.callGoogle(TEST_PROMPT), 'gemini-3.1-flash-lite-preview'),
       ]);
 
       res.json({ results, timestamp: new Date().toISOString() });

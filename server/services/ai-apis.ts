@@ -312,7 +312,7 @@ export class AIService {
     try {
       // Use x-goog-api-key header instead of query parameter to avoid key exposure in logs
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent',
         {
           method: 'POST',
           headers: {
@@ -384,7 +384,7 @@ export class AIService {
 
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent',
         {
           method: 'POST',
           headers: {
@@ -541,7 +541,7 @@ Seja objetivo, preciso e mantenha um tom profissional.`;
     try {
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent',
         {
           method: 'POST',
           headers: {
