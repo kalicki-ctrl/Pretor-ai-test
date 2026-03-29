@@ -17,7 +17,7 @@ const initializeRedis = async () => {
         client = createClient({
             url: process.env.REDIS_URL,
             socket: {
-                connectTimeout: 5000,
+                connectTimeout: 5000, // 5 second timeout
             }
         });
 

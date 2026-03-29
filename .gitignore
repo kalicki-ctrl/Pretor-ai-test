@@ -65,3 +65,4 @@ __pycache__/
 *$py.class
 .Python
 *.egg-info/
+.claude/
