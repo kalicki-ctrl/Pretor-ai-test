@@ -575,7 +575,7 @@ ${Object.entries(aiWeights).map(([ai, weight]) =>
 
       if (apiKeys.openrouter) {
         promises.push(
-          aiService.callOpenRouter(message, apiKeys.openrouter)
+          aiService.callOpenRouter(message)
             .then(response => { responses.openrouter = response; })
             .catch(error => {
               responses.openrouter = { content: '', responseTime: 0, error: error.message };
