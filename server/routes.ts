@@ -935,6 +935,42 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
     }
   });
 
+  // Dev-only: test all API providers and return detailed diagnostics
+  if (process.env.NODE_ENV === 'development') {
+    app.get('/api/debug/providers', async (_req, res) => {
+      const TEST_PROMPT = 'Reply with exactly: ok';
+      const results: Record<string, { status: string; errorCode?: string; responseTime: number; model?: string; hint?: string }> = {};
+
+      const run = async (name: string, fn: () => Promise<{ content: string; responseTime: number; error?: string; errorCode?: string }>, model: string) => {
+        const r = await fn();
+        const hint = r.errorCode === 'AUTH_ERROR' ? 'Key is invalid or revoked — generate a new one'
+          : r.errorCode === 'NO_KEY' ? 'Add this key to your .env file'
+          : r.errorCode === 'RATE_LIMITED' ? 'Too many requests — wait a minute'
+          : r.errorCode === 'MODEL_NOT_FOUND' ? 'Model name is wrong or deprecated'
+          : r.errorCode === 'NETWORK_ERROR' ? 'Could not reach provider — check internet/firewall'
+          : r.errorCode === 'TIMEOUT' ? 'Request timed out — provider may be slow'
+          : r.errorCode === 'SERVER_ERROR' ? 'Provider internal error — try again later'
+          : undefined;
+        results[name] = {
+          status: r.error ? `❌ ${r.error}` : '✅ OK',
+          errorCode: r.errorCode,
+          responseTime: r.responseTime,
+          model,
+          ...(hint ? { hint } : {}),
+        };
+      };
+
+      await Promise.all([
+        run('openrouter', () => aiService.callOpenRouter(TEST_PROMPT), 'meta-llama/llama-3.1-8b-instruct:free'),
+        run('groq', () => aiService.callGroq(TEST_PROMPT), 'llama3-8b-8192'),
+        run('cohere', () => aiService.callCohere(TEST_PROMPT), 'command-r'),
+        run('gemini', () => aiService.callGoogle(TEST_PROMPT), 'gemini-2.0-flash'),
+      ]);
+
+      res.json({ results, timestamp: new Date().toISOString() });
+    });
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }

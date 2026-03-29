@@ -1,16 +1,55 @@
 import { createHash } from 'crypto';
 
+export type AIErrorCode =
+  | 'NO_KEY'           // API key not configured
+  | 'AUTH_ERROR'       // 401/403 — invalid or revoked key
+  | 'RATE_LIMITED'     // 429 — too many requests
+  | 'MODEL_NOT_FOUND'  // 404 — model name wrong or deprecated
+  | 'SERVER_ERROR'     // 5xx — provider internal error
+  | 'NETWORK_ERROR'    // Couldn't reach the provider
+  | 'TIMEOUT'          // Request exceeded timeout
+  | 'PARSE_ERROR'      // Unexpected response format
+  | 'UNKNOWN';         // Anything else
+
 interface AIResponse {
   content: string;
   responseTime: number;
   tokens?: number;
   error?: string;
+  errorCode?: AIErrorCode;
   sources?: Array<{
     title: string;
     url: string;
     type: 'website' | 'document' | 'reference' | 'citation';
     description?: string;
   }>;
+}
+
+function classifyError(error: unknown, httpStatus?: number): AIErrorCode {
+  if (httpStatus === 401 || httpStatus === 403) return 'AUTH_ERROR';
+  if (httpStatus === 429) return 'RATE_LIMITED';
+  if (httpStatus === 404) return 'MODEL_NOT_FOUND';
+  if (httpStatus !== undefined && httpStatus >= 500) return 'SERVER_ERROR';
+
+  const msg = error instanceof Error ? error.message : String(error);
+  if (msg.includes('timeout') || msg.includes('Timeout')) return 'TIMEOUT';
+  if (msg.includes('Network error') || msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND')) return 'NETWORK_ERROR';
+  if (msg.includes('401')) return 'AUTH_ERROR';
+  if (msg.includes('429')) return 'RATE_LIMITED';
+  if (msg.includes('404')) return 'MODEL_NOT_FOUND';
+  if (msg.match(/5\d\d/)) return 'SERVER_ERROR';
+  return 'UNKNOWN';
+}
+
+function devLog(provider: string, result: { error?: string; errorCode?: AIErrorCode; responseTime: number; content: string }) {
+  if (process.env.NODE_ENV !== 'development') return;
+  if (result.error) {
+    const label = result.errorCode ?? 'UNKNOWN';
+    console.error(`[AI:${provider}] ❌ ${label} (${result.responseTime}ms) — ${result.error}`);
+  } else {
+    const preview = result.content.slice(0, 80).replace(/\n/g, ' ');
+    console.log(`[AI:${provider}] ✅ OK (${result.responseTime}ms) — "${preview}..."`);
+  }
 }
 
 // Shared language detection utility — single source of truth
@@ -135,11 +174,9 @@ export class AIService {
     const selectedModel = model || 'meta-llama/llama-3.1-8b-instruct:free';
 
     if (!key) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: 'OpenRouter API key not configured',
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: 'OpenRouter API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
+      devLog('OpenRouter', r);
+      return r;
     }
 
     try {
@@ -154,35 +191,26 @@ export class AIService {
           },
           body: JSON.stringify({
             model: selectedModel,
-            messages: [
-              {
-                role: 'user',
-                content: prompt
-              }
-            ]
+            messages: [{ role: 'user', content: prompt }],
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
+        const r = { content: '', responseTime: Date.now() - startTime, error: `OpenRouter API error: ${response.status} ${response.statusText}`, errorCode: classifyError(null, response.status) };
+        devLog('OpenRouter', r);
+        return r;
       }
 
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || '';
-
-      return {
-        content,
-        responseTime: Date.now() - startTime,
-        tokens: data.usage?.total_tokens,
-        sources: this.extractSources(content),
-      };
+      const r = { content, responseTime: Date.now() - startTime, tokens: data.usage?.total_tokens, sources: this.extractSources(content) };
+      devLog('OpenRouter', r);
+      return r;
     } catch (error) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: error instanceof Error ? error.message : String(error), errorCode: classifyError(error) };
+      devLog('OpenRouter', r);
+      return r;
     }
   }
 
@@ -191,11 +219,9 @@ export class AIService {
     const key = apiKey || process.env.GROQ_API_KEY;
 
     if (!key) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: 'Groq API key not configured',
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: 'Groq API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
+      devLog('Groq', r);
+      return r;
     }
 
     try {
@@ -203,40 +229,29 @@ export class AIService {
         'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${key}`,
-          },
+          headers: { 'Authorization': `Bearer ${key}` },
           body: JSON.stringify({
-            model: model,
-            messages: [
-              {
-                role: 'user',
-                content: prompt
-              }
-            ]
+            model,
+            messages: [{ role: 'user', content: prompt }],
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
+        const r = { content: '', responseTime: Date.now() - startTime, error: `Groq API error: ${response.status} ${response.statusText}`, errorCode: classifyError(null, response.status) };
+        devLog('Groq', r);
+        return r;
       }
 
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || '';
-
-      return {
-        content,
-        responseTime: Date.now() - startTime,
-        tokens: data.usage?.total_tokens,
-        sources: this.extractSources(content),
-      };
+      const r = { content, responseTime: Date.now() - startTime, tokens: data.usage?.total_tokens, sources: this.extractSources(content) };
+      devLog('Groq', r);
+      return r;
     } catch (error) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: error instanceof Error ? error.message : String(error), errorCode: classifyError(error) };
+      devLog('Groq', r);
+      return r;
     }
   }
 
@@ -245,11 +260,9 @@ export class AIService {
     const key = apiKey || process.env.COHERE_API_KEY;
 
     if (!key) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: 'Cohere API key not configured',
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: 'Cohere API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
+      devLog('Cohere', r);
+      return r;
     }
 
     try {
@@ -268,24 +281,20 @@ export class AIService {
       );
 
       if (!response.ok) {
-        throw new Error(`Cohere API error: ${response.status} ${response.statusText}`);
+        const r = { content: '', responseTime: Date.now() - startTime, error: `Cohere API error: ${response.status} ${response.statusText}`, errorCode: classifyError(null, response.status) };
+        devLog('Cohere', r);
+        return r;
       }
 
       const data = await response.json();
       const content = data.message?.content?.[0]?.text || '';
-
-      return {
-        content,
-        responseTime: Date.now() - startTime,
-        tokens: data.usage?.tokens?.output_tokens,
-        sources: this.extractSources(content),
-      };
+      const r = { content, responseTime: Date.now() - startTime, tokens: data.usage?.tokens?.output_tokens, sources: this.extractSources(content) };
+      devLog('Cohere', r);
+      return r;
     } catch (error) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: error instanceof Error ? error.message : String(error), errorCode: classifyError(error) };
+      devLog('Cohere', r);
+      return r;
     }
   }
 
@@ -294,11 +303,9 @@ export class AIService {
     const key = apiKey || process.env.GEMINI_API_KEY;
 
     if (!key) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: 'Google API key not configured',
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: 'Google API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
+      devLog('Gemini', r);
+      return r;
     }
 
     try {
@@ -312,34 +319,26 @@ export class AIService {
             'x-goog-api-key': key,
           },
           body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }]
+            contents: [{ parts: [{ text: prompt }] }]
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`Google API error: ${response.status} ${response.statusText}`);
+        const r = { content: '', responseTime: Date.now() - startTime, error: `Google API error: ${response.status} ${response.statusText}`, errorCode: classifyError(null, response.status) };
+        devLog('Gemini', r);
+        return r;
       }
 
       const data = await response.json();
       const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      return {
-        content,
-        responseTime: Date.now() - startTime,
-        tokens: data.usageMetadata?.totalTokenCount,
-        sources: this.extractSources(content),
-      };
+      const r = { content, responseTime: Date.now() - startTime, tokens: data.usageMetadata?.totalTokenCount, sources: this.extractSources(content) };
+      devLog('Gemini', r);
+      return r;
     } catch (error) {
-      return {
-        content: '',
-        responseTime: Date.now() - startTime,
-        error: error instanceof Error ? error.message : String(error),
-      };
+      const r = { content: '', responseTime: Date.now() - startTime, error: error instanceof Error ? error.message : String(error), errorCode: classifyError(error) };
+      devLog('Gemini', r);
+      return r;
     }
   }
 
