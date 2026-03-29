@@ -39,6 +39,7 @@ describe('PromptConfirmation', () => {
   test('onCancel called when cancel/back button clicked', async () => {
     const user = userEvent.setup();
     render(<PromptConfirmation {...defaultProps} />);
+    // The cancel button contains "Editar prompt"
     const cancelButton = screen.getByRole('button', { name: /editar prompt/i });
     await user.click(cancelButton);
     expect(defaultProps.onCancel).toHaveBeenCalledTimes(1);
@@ -66,7 +67,14 @@ describe('PromptConfirmation', () => {
 
   test('shows response time badge', () => {
     render(<PromptConfirmation {...defaultProps} />);
+    // responseTime=1234ms => 1.2s
     expect(screen.getByText('1.2s')).toBeInTheDocument();
+  });
+
+  test('confirm button is disabled when isLoading=true', () => {
+    render(<PromptConfirmation {...defaultProps} isLoading={true} />);
+    const confirmButton = screen.getByRole('button', { name: /iniciando pesquisa/i });
+    expect(confirmButton).toBeDisabled();
   });
 
   test('isLoading=true disables the confirm button', () => {
@@ -77,8 +85,9 @@ describe('PromptConfirmation', () => {
 
   test('recommended AI (groq) is visually highlighted with a badge or indicator', () => {
     render(<PromptConfirmation {...defaultProps} />);
+    // The component shows "Recomendação Pretor AI: Groq" text when recommendedAI is set
+    expect(screen.getByText(/groq/i)).toBeInTheDocument();
+    // The recommendation section specifically mentions the recommended AI
     expect(screen.getByText(/recomendação pretor ai/i)).toBeInTheDocument();
-    const groqElements = screen.getAllByText(/groq/i);
-    expect(groqElements.length).toBeGreaterThan(0);
   });
 });
