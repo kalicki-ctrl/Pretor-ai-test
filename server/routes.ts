@@ -250,7 +250,7 @@ EXEMPLOS:
 
 LEMBRE-SE: Você deve gerar 3 REFORMULAÇÕES do prompt acima, não respostas ao que foi perguntado. As alternativas devem ser versões melhoradas da MESMA PERGUNTA ou SOLICITAÇÃO.`;
 
-      const response = await aiService.callGroq(understandingPrompt, groqKey, 'llama3-8b-8192');
+      const response = await aiService.callGroq(understandingPrompt, groqKey, 'llama-3.1-8b-instant');
 
       if (response.error) {
         return res.status(500).json({
@@ -961,10 +961,10 @@ Use a descrição da imagem como contexto para fornecer uma resposta relevante e
       };
 
       await Promise.all([
-        run('openrouter', () => aiService.callOpenRouter(TEST_PROMPT), 'meta-llama/llama-3.1-8b-instruct:free'),
-        run('groq', () => aiService.callGroq(TEST_PROMPT), 'llama3-8b-8192'),
-        run('cohere', () => aiService.callCohere(TEST_PROMPT), 'command-r'),
-        run('gemini', () => aiService.callGoogle(TEST_PROMPT), 'gemini-2.0-flash'),
+        run('openrouter', () => aiService.callOpenRouter(TEST_PROMPT), 'mistralai/mistral-7b-instruct:free'),
+        run('groq', () => aiService.callGroq(TEST_PROMPT), 'llama-3.1-8b-instant'),
+        run('cohere', () => aiService.callCohere(TEST_PROMPT), 'command-r-08-2024'),
+        run('gemini', () => aiService.callGoogle(TEST_PROMPT), 'gemini-2.0-flash-lite'),
       ]);
 
       res.json({ results, timestamp: new Date().toISOString() });

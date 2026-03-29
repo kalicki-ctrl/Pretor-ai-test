@@ -82,7 +82,7 @@ describe('callGroq', () => {
     expect(result.error).toContain('400');
   });
 
-  it('uses default model llama3-8b-8192', async () => {
+  it('uses default model llama-3.1-8b-instant', async () => {
     const fetchMock = mockFetchResponse({
       choices: [{ message: { content: 'ok' } }],
       usage: { total_tokens: 3 },
@@ -94,7 +94,7 @@ describe('callGroq', () => {
 
     const [, options] = fetchMock.mock.calls[0];
     const body = JSON.parse(options.body as string);
-    expect(body.model).toBe('llama3-8b-8192');
+    expect(body.model).toBe('llama-3.1-8b-instant');
   });
 
   it('accepts a custom model parameter', async () => {
@@ -151,7 +151,7 @@ describe('callOpenRouter', () => {
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
   });
 
-  it('uses default model meta-llama/llama-3.1-8b-instruct:free', async () => {
+  it('uses default model mistralai/mistral-7b-instruct:free', async () => {
     const fetchMock = mockFetchResponse({
       choices: [{ message: { content: 'ok' } }],
       usage: { total_tokens: 3 },
@@ -163,7 +163,7 @@ describe('callOpenRouter', () => {
 
     const [, options] = fetchMock.mock.calls[0];
     const body = JSON.parse(options.body as string);
-    expect(body.model).toBe('meta-llama/llama-3.1-8b-instruct:free');
+    expect(body.model).toBe('mistralai/mistral-7b-instruct:free');
   });
 
   it('returns content from choices[0].message.content', async () => {

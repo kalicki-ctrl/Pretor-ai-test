@@ -60,7 +60,7 @@ export class CollaborativeAIService {
       case 'openrouter':
         return agent.id === 'grok'
           ? this.aiService.callOpenRouter(prompt, 'x-ai/grok-beta')
-          : this.aiService.callOpenRouter(prompt, 'meta-llama/llama-3.1-8b-instruct:free');
+          : this.aiService.callOpenRouter(prompt, 'mistralai/mistral-7b-instruct:free');
       case 'groq':
         return this.aiService.callGroq(prompt);
       case 'cohere':

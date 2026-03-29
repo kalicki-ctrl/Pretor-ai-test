@@ -29,14 +29,15 @@ function classifyError(error: unknown, httpStatus?: number): AIErrorCode {
   if (httpStatus === 401 || httpStatus === 403) return 'AUTH_ERROR';
   if (httpStatus === 429) return 'RATE_LIMITED';
   if (httpStatus === 404) return 'MODEL_NOT_FOUND';
+  if (httpStatus === 400) return 'MODEL_NOT_FOUND'; // 400 usually means bad model name or deprecated model
   if (httpStatus !== undefined && httpStatus >= 500) return 'SERVER_ERROR';
 
   const msg = error instanceof Error ? error.message : String(error);
   if (msg.includes('timeout') || msg.includes('Timeout')) return 'TIMEOUT';
   if (msg.includes('Network error') || msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND')) return 'NETWORK_ERROR';
-  if (msg.includes('401')) return 'AUTH_ERROR';
+  if (msg.includes('401') || msg.includes('403')) return 'AUTH_ERROR';
   if (msg.includes('429')) return 'RATE_LIMITED';
-  if (msg.includes('404')) return 'MODEL_NOT_FOUND';
+  if (msg.includes('404') || msg.includes('400')) return 'MODEL_NOT_FOUND';
   if (msg.match(/5\d\d/)) return 'SERVER_ERROR';
   return 'UNKNOWN';
 }
@@ -171,7 +172,7 @@ export class AIService {
   async callOpenRouter(prompt: string, model?: string, apiKey?: string): Promise<AIResponse> {
     const startTime = Date.now();
     const key = apiKey || process.env.OPENROUTER_API_KEY;
-    const selectedModel = model || 'meta-llama/llama-3.1-8b-instruct:free';
+    const selectedModel = model || 'mistralai/mistral-7b-instruct:free';
 
     if (!key) {
       const r = { content: '', responseTime: Date.now() - startTime, error: 'OpenRouter API key not configured', errorCode: 'NO_KEY' as AIErrorCode };
@@ -214,7 +215,7 @@ export class AIService {
     }
   }
 
-  async callGroq(prompt: string, apiKey?: string, model: string = 'llama3-8b-8192'): Promise<AIResponse> {
+  async callGroq(prompt: string, apiKey?: string, model: string = 'llama-3.1-8b-instant'): Promise<AIResponse> {
     const startTime = Date.now();
     const key = apiKey || process.env.GROQ_API_KEY;
 
@@ -274,7 +275,7 @@ export class AIService {
             'Authorization': `Bearer ${key}`,
           },
           body: JSON.stringify({
-            model: 'command-r',
+            model: 'command-r-08-2024',
             messages: [{ role: 'user', content: prompt }],
           }),
         }
@@ -311,7 +312,7 @@ export class AIService {
     try {
       // Use x-goog-api-key header instead of query parameter to avoid key exposure in logs
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
         {
           method: 'POST',
           headers: {
@@ -540,7 +541,7 @@ Seja objetivo, preciso e mantenha um tom profissional.`;
     try {
       // Use x-goog-api-key header instead of query parameter
       const response = await this.makeRequest(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent',
         {
           method: 'POST',
           headers: {
