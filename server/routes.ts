@@ -209,7 +209,7 @@ Responda SEMPRE neste formato JSON:
     "Segunda REFORMULAÇÃO do prompt original",
     "Terceira REFORMULAÇÃO do prompt original"
   ],
-  "recommendedAI": "openrouter|groq|cohere",
+  "recommendedAI": "groq",
   "aiWeights": {
     "openrouter": 0.3,
     "groq": 0.25,
